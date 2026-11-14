@@ -41,10 +41,16 @@ nohup python3 "$REPO/server/tvremote.py" >> "$CONF/server.log" 2>&1 &
 for _ in $(seq 50); do [ -f "$CONF/config.json" ] && break; sleep 0.1; done
 sleep 0.5
 
-# Let the phone reach the server if the firewall (ufw) is on.
+# Let the phone reach the server through the firewall (ufw, on by default in
+# Linux Mint). Always add the rule - don't parse "ufw status", its text is
+# translated (e.g. "Estado: activo") - so it also works if ufw is enabled later.
 PORT="$(python3 -c "import json;print(json.load(open('$CONF/config.json')).get('port', 8080))")"
-if command -v ufw >/dev/null && sudo ufw status 2>/dev/null | grep -q "Status: active"; then
-  sudo ufw allow "$PORT/tcp" >/dev/null && echo "Firewall: allowed port $PORT."
+if command -v ufw >/dev/null; then
+  if sudo ufw allow "$PORT/tcp" comment "TV Remote" >/dev/null; then
+    echo "Firewall: port $PORT open for the phone."
+  else
+    echo "WARNING: could not open port $PORT in the firewall. Run:  sudo ufw allow $PORT/tcp"
+  fi
 fi
 
 echo

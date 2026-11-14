@@ -65,7 +65,7 @@ The link includes a secret token (`?t=...`), which stops other devices on your W
 
 | Problem | Fix |
 |---|---|
-| The page doesn't open on the phone | Check the phone is on the same Wi-Fi. Check the server is running: `tail ~/.config/tv-remote/server.log`. If needed, run `./install.sh` again. |
+| The page doesn't open on the phone ("page unreachable") | 1. The phone must be on the **same Wi-Fi** as the laptop, not on mobile data. 2. The firewall may be blocking it. On the laptop, run `sudo ufw allow 8080/tcp`. 3. `./show-qr.sh` warns you if the server isn't running. 4. Guest Wi-Fi networks often block devices from reaching each other, so use the main network. |
 | "Token inválido" on the phone | Run `./show-qr.sh` on the laptop and scan the code again. |
 | It worked before, but not anymore | The laptop probably got a new IP address. Run `./show-qr.sh` and scan again, then set a fixed IP in the router. |
 | No QR code, only a link | Run `sudo apt install qrencode`, then `./show-qr.sh`. |

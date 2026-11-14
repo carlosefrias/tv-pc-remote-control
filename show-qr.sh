@@ -23,6 +23,11 @@ IP="$(ip -4 route get 1.1.1.1 2>/dev/null | awk '{for (i = 1; i < NF; i++) if ($
 URL="http://$IP:$PORT/?t=$TOKEN"
 
 echo
+if ! python3 -c 'import sys, urllib.request; urllib.request.urlopen(sys.argv[1], timeout=2)' "http://127.0.0.1:$PORT/" 2>/dev/null; then
+  echo "  WARNING: the TV Remote server is NOT running, so the phone can't connect."
+  echo "  Start it with ./install.sh and look at $CONF/server.log for errors."
+  echo
+fi
 if command -v qrencode >/dev/null; then
   echo "  Scan this with the phone's camera (phone on the same Wi-Fi as this laptop):"
   echo
