@@ -1,0 +1,17 @@
+I want to create a small app for my home tv.
+I have a tv connected by hdmi cable to a linux mint laptop. I use it mainly to watch tv (portuguese tv)
+But I need to always go the the laptop to choose and change the channel.
+I want a way to use my smartphone to do that.
+So I want a small app on my phone where I can choose between several channels (rtp 1, rtp 2, rtp notícias, cnn portugal, etc..)
+And when choosing the channel on the app. The app would send a signal to the laptop (websocket, http request or (less ideal) bluetooth)
+And the laptop would close any brower (I usr firefox) and open one with the link for that tv channel, openend on the tv, and maximized.
+So this would be essentially two apps, one for the smartphone and one for the laptop.
+The smartphone I use is an android a bit old, it is currently connected to this machine by usb.
+I want you to plan, and build the app and commit the code using git so it can better traced.
+The app on the laptop can be any language as long as it has fast response.
+The app on the smartphone either we do something multiplatform compatible (android & ios) like somthing with html/javascript
+or we do two apps one for android other for ios (your chooise)
+The list of channels I want a way to costumize them, like text list or something where we can define/redefine urls. And add/remove channels.
+In terms of the smarthphone app the UI should be just a simple grid where each cell is one channel.
+Other thing that should be possible is an off button that will shutdown the laptop.
+Any questions or design choices I didn't made, please ask.

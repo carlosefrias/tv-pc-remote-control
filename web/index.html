@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#111418">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="TV Remote">
+  <title>TV Remote</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>TV</h1>
+    <button id="editBtn" class="ghost">Editar</button>
+  </header>
+
+  <main>
+    <div id="grid" class="grid"></div>
+
+    <div id="editor" class="editor hidden">
+      <p class="hint">Nome e link de cada canal. Use ↑ ↓ para ordenar.</p>
+      <div id="rows"></div>
+      <button id="addBtn" class="wide">+ Adicionar canal</button>
+      <div class="editor-actions">
+        <button id="cancelBtn" class="ghost">Cancelar</button>
+        <button id="saveBtn" class="primary">Guardar</button>
+      </div>
+    </div>
+  </main>
+
+  <footer id="controls">
+    <button data-vol="down" aria-label="Volume -">🔉</button>
+    <button data-vol="mute" aria-label="Mute">🔇</button>
+    <button data-vol="up" aria-label="Volume +">🔊</button>
+    <button id="stopBtn" aria-label="Parar">⏹</button>
+    <button id="powerBtn" class="danger" aria-label="Desligar">⏻</button>
+  </footer>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

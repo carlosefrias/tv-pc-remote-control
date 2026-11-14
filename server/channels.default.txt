@@ -1,0 +1,15 @@
+# TV Remote channel list - one channel per line:
+#   Name | URL
+# Lines starting with # are ignored. Order here = order on the phone grid.
+# You can edit this file by hand or from the phone app (Edit mode).
+# Note: editing from the phone rewrites this file (comments other than this
+# header are not kept).
+
+RTP 1 | https://www.rtp.pt/play/direto/rtp1
+RTP 2 | https://www.rtp.pt/play/direto/rtp2
+RTP Notícias | https://www.rtp.pt/play/direto/rtp3
+CNN Portugal | https://cnnportugal.iol.pt/direto
+RTP Memória | https://www.rtp.pt/play/direto/rtpmemoria
+RTP Mundo | https://www.rtp.pt/play/direto/rtpinternacional
+RTP África | https://www.rtp.pt/play/direto/rtpafrica
+RTP Desporto 1 | https://www.rtp.pt/play/direto/rtpdesporto1
