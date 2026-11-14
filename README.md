@@ -95,6 +95,9 @@ All of these are official, free live streams (in Portugal). Each was tested in F
 | RTP 1, RTP 2, RTP Notícias, RTP Memória, RTP Mundo, RTP África, RTP Madeira, RTP Açores, RTP Desporto 1 | `rtp.pt/play/direto/…` |
 | CNN Portugal | `cnnportugal.iol.pt/direto` |
 | ARTV Parlamento | `canal.parlamento.pt` |
+| Euronews (Portuguese) | `pt.euronews.com/live` |
+
+**Euronews, first time only:** the site shows a cookie notice before it loads the video. On the TV, click **"Continuar sem aceitar"** (or "Aceitar e fechar") once with the laptop's mouse. The choice is kept in the TV's Firefox profile.
 
 RTP Desporto 1 only has pictures while an event is on.
 
@@ -103,10 +106,9 @@ Not included for now (checked in November 2026):
 | Channel | Why |
 |---|---|
 | SIC, TVI (and V+, TVI Ficção, TVI Reality, TVI Internacional) | The live stream needs an account (OPTO / TVI Player). The player never starts in the TV's Firefox. |
-| SIC Notícias | The free player at `sicnoticias.pt/agora` loads, but in tests it never received video. |
+| SIC Notícias | The page at `sicnoticias.pt/agora` uses reCAPTCHA bot detection. With the automated Firefox the player never gets video. |
 | CMTV, NOW | Need an account ("Iniciar sessão"). |
 | Porto Canal | The site blocks automated browsers (Cloudflare). |
-| Euronews | The player is in a frame and waits for a click. It could be supported later. |
 
 Sites such as cxtv re-stream channels without the broadcasters' permission, so they are not used here.
 
@@ -155,6 +157,7 @@ Firefox only lets a page go full screen after a real click, so the server contro
    - finds the biggest video on the page and puts its player into real full screen, which also hides the site's pop-ups;
    - unmutes the video, because many sites start muted;
    - starts the video if it is waiting for a click. It tries `play()` first, then one real click on the player. It never clicks while an ad is playing.
+   - handles players inside a frame (an embedded Dailymotion, YouTube or similar player, as Euronews uses). The frame goes full screen from the page, and the server enters the frame through Marionette (which works even across sites) and runs the same script there: play, unmute, click if needed. Nested frames work up to 3 levels deep.
 3. The server keeps checking (every 5 s after the first minute), so if anything takes the player out of full screen, it goes back.
 
 This works with any site that uses a standard web video player, not just RTP and CNN. If Firefox can't be controlled within 15 s, the server falls back to opening the page normally in kiosk mode. To turn the feature off, set `fullscreen_player` to `false`.

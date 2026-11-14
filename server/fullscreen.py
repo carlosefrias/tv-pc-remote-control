@@ -131,6 +131,43 @@ def place_window(m, tv):
             pass
 
 
+ELEMENT_KEY = "element-6066-11e4-a52e-4f735466cecf"  # WebDriver element reference
+
+
+def switch_to_frame(m, ref):
+    try:
+        m.send("WebDriver:SwitchToFrame", {"id": ref})
+    except MarionetteError:  # older protocol form
+        m.send("WebDriver:SwitchToFrame", {"element": ref.get(ELEMENT_KEY)})
+
+
+def run_in_frame(m, ref, elapsed, clicks, depth=0):
+    """Enter the player iframe (Marionette can, even cross-origin) and run the
+    assist there: play, unmute, and if needed one click. Nested up to 3 deep."""
+    if not isinstance(ref, dict) or ELEMENT_KEY not in ref:
+        return {}
+    try:
+        switch_to_frame(m, ref)
+    except MarionetteError as e:
+        return {"error": "frame: %s" % str(e)[:100]}
+    try:
+        res = m.execute(ASSIST_JS, [{"elapsed": elapsed, "clicks": clicks[0], "inFrame": True}]) or {}
+        if res.get("frame") and not res.get("video") and depth < 2:
+            res = run_in_frame(m, res["frame"], elapsed, clicks, depth + 1)
+        elif res.get("click") and clicks[0] < 1:
+            clicks[0] += 1
+            m.click(*res["click"])  # coordinates are inside this frame
+        res.pop("frame", None)
+        return res
+    except MarionetteError as e:
+        return {"error": "frame: %s" % str(e)[:100]}
+    finally:
+        try:
+            m.send("WebDriver:SwitchToParentFrame")
+        except MarionetteError:
+            pass
+
+
 def connect(port, keep_going, timeout=15.0):
     """Wait for Firefox to open the Marionette port."""
     deadline = time.time() + timeout
@@ -167,15 +204,24 @@ def assist(port, keep_going, url, tv=None, fast_secs=60, on_status=None):
         except (OSError, MarionetteError) as e:
             log("could not take control of Firefox: %s" % e)
             return False
-        start, clicks, last = time.time(), 0, None
+        start, last = time.time(), None
+        clicks = [0]  # shared with run_in_frame
         while keep_going():
             elapsed = time.time() - start
             try:
-                res = m.execute(ASSIST_JS, [{"elapsed": elapsed, "clicks": clicks}]) or {}
+                res = m.execute(ASSIST_JS, [{"elapsed": elapsed, "clicks": clicks[0]}]) or {}
             except MarionetteError as e:  # page navigating/reloading: try again
                 res = {"error": str(e)[:120]}
-            if res.get("click") and clicks < 1:
-                clicks += 1
+            if res.get("frame") and not res.get("video"):
+                # The player is inside an iframe: run the assist in there too.
+                inner = run_in_frame(m, res["frame"], elapsed, clicks)
+                res.update({k: inner.get(k) for k in ("video", "playing", "muted", "ad", "player", "error")
+                            if k in inner})
+                res["action"] = "frame:%s" % (inner.get("action") or "-") if not res.get("action") \
+                    else "%s+frame:%s" % (res["action"], inner.get("action") or "-")
+                res["player"] = "iframe %s %s" % (res.get("frameSrc", "")[:40], inner.get("player") or "")
+            elif res.get("click") and clicks[0] < 1:
+                clicks[0] += 1
                 try:
                     m.click(*res["click"])
                 except MarionetteError as e:

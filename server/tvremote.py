@@ -82,6 +82,7 @@ FIREFOX_PREFS = {
     "media.autoplay.default": 0,          # allow audio+video autoplay
     "media.autoplay.blocking_policy": 0,
     "full-screen-api.warning.timeout": 0,
+    "media.videocontrols.picture-in-picture.video-toggle.enabled": False,  # no "Pop out this video" over the picture
     "full-screen-api.transition-duration.enter": "0 0",
     "full-screen-api.transition-duration.leave": "0 0",
     "browser.tabs.warnOnClose": False,
