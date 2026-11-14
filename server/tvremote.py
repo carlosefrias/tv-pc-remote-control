@@ -87,6 +87,17 @@ FIREFOX_PREFS = {
     "browser.tabs.warnOnClose": False,
     "browser.warnOnQuit": False,
     "app.update.auto": False,
+    # We close Firefox on every channel change. After 3 closes during startup
+    # Firefox would stop at an (invisible on the TV) "Safe Mode?" dialog.
+    "toolkit.startup.max_resumed_crashes": -1,
+    "toolkit.startup.recent_crashes": 0,
+    # No Mozilla promo pages / remote experiments opening over the channel.
+    "browser.startup.homepage_override.once": "",
+    "app.normandy.enabled": False,
+    "app.shield.optoutstudies.enabled": False,
+    "messaging-system.rsexperimentloader.enabled": False,
+    "browser.newtabpage.activity-stream.asrouter.userprefs.cfr.features": False,
+    "browser.newtabpage.activity-stream.asrouter.userprefs.cfr.addons": False,
 }
 
 lock = threading.Lock()

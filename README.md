@@ -82,6 +82,38 @@ CNN Portugal | https://cnnportugal.iol.pt/direto
 
 Each line is `Name | URL`, and the file order is the grid order. Changes are picked up right away, with no restart needed.
 
+When new channels are added to the default list ([`server/channels.default.txt`](server/channels.default.txt)), add them to your own list with:
+
+```bash
+./update-channels.sh
+```
+
+It only adds the missing channels, at the end. Your own channels, names and order stay as they are.
+
+### Channels in the default list
+
+All of these are official, free live streams (in Portugal). Each was tested in Firefox with the full-screen helper:
+
+| Channel | Page |
+|---|---|
+| RTP 1, RTP 2, RTP Notícias, RTP Memória, RTP Mundo, RTP África, RTP Madeira, RTP Açores, RTP Desporto 1 | `rtp.pt/play/direto/…` |
+| CNN Portugal | `cnnportugal.iol.pt/direto` |
+| ARTV Parlamento | `canal.parlamento.pt` |
+
+RTP Desporto 1 only has pictures while an event is on.
+
+Not included for now (checked in November 2026):
+
+| Channel | Why |
+|---|---|
+| SIC, TVI (and V+, TVI Ficção, TVI Reality, TVI Internacional) | The live stream needs an account (OPTO / TVI Player). The player never starts in the TV's Firefox. |
+| SIC Notícias | The free player at `sicnoticias.pt/agora` loads, but in tests it never received video. |
+| CMTV, NOW | Need an account ("Iniciar sessão"). |
+| Porto Canal | The site blocks automated browsers (Cloudflare). |
+| Euronews | The player is in a frame and waits for a click. It could be supported later. |
+
+Sites such as cxtv re-stream channels without the broadcasters' permission, so they are not used here.
+
 ## How the phone reaches the laptop
 
 Many routers isolate Wi-Fi devices from each other ("AP isolation"), and 4G connections don't accept connections coming in from the internet. So the phone and the laptop talk through **[ntfy.sh](https://ntfy.sh)**, a free public message service that needs no account:

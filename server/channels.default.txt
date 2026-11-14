@@ -13,3 +13,6 @@ RTP Memória | https://www.rtp.pt/play/direto/rtpmemoria
 RTP Mundo | https://www.rtp.pt/play/direto/rtpinternacional
 RTP África | https://www.rtp.pt/play/direto/rtpafrica
 RTP Desporto 1 | https://www.rtp.pt/play/direto/rtpdesporto1
+ARTV Parlamento | https://canal.parlamento.pt/
+RTP Madeira | https://www.rtp.pt/play/direto/rtpmadeira
+RTP Açores | https://www.rtp.pt/play/direto/rtpacores
