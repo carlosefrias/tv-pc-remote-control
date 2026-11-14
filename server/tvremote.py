@@ -19,6 +19,7 @@ from http import HTTPStatus
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
+import display
 import fullscreen
 import relay
 
@@ -42,6 +43,9 @@ DEFAULT_CONFIG = {
     # start it if it waits for a click, and unmute it. Needs dedicated_profile.
     "fullscreen_player": True,
     "marionette_port": 2828,
+    # Which screen shows the channel: "auto" = the TV (external HDMI/DP screen),
+    # an xrandr output name such as "HDMI-1", or "none" to leave Firefox where it opens.
+    "tv_display": "auto",
     "shutdown_cmd": ["systemctl", "poweroff"],
     "volume_step": "5%",
     # Control through the internet (for Wi-Fi with "AP isolation" / 4G routers):
@@ -199,13 +203,13 @@ def launch_firefox(cfg, url, helper=False):
     )
 
 
-def start_fullscreen_helper(cfg, gen, url):
+def start_fullscreen_helper(cfg, gen, url, tv):
     def keep_going():
         return state["gen"] == gen
 
     def run():
         port = int(cfg.get("marionette_port", 2828))
-        if fullscreen.assist(port, keep_going, url):
+        if fullscreen.assist(port, keep_going, url, tv=tv):
             return
         # Couldn't control Firefox: at least show the page (whole page, kiosk).
         with lock:
@@ -213,6 +217,8 @@ def start_fullscreen_helper(cfg, gen, url):
                 fullscreen.log("falling back to opening the page without the helper")
                 kill_firefox()
                 launch_firefox(cfg, url, helper=False)
+        if tv and keep_going():
+            display.move_with_wm(tv)
 
     threading.Thread(target=run, daemon=True).start()
 
@@ -222,10 +228,13 @@ def play(cfg, channel):
         state["gen"] += 1
         kill_firefox()
         helper = use_fullscreen_helper(cfg)
+        tv = display.find_tv(cfg.get("tv_display", "auto"))
         launch_firefox(cfg, channel["url"], helper)
         state["current"] = channel["id"]
         if helper:
-            start_fullscreen_helper(cfg, state["gen"], channel["url"])
+            start_fullscreen_helper(cfg, state["gen"], channel["url"], tv)
+        elif tv:
+            threading.Thread(target=display.move_with_wm, args=(tv,), daemon=True).start()
 
 
 def stop():

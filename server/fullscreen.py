@@ -13,6 +13,8 @@ import sys
 import time
 from pathlib import Path
 
+import display
+
 ASSIST_JS = (Path(__file__).resolve().parent / "player_assist.js").read_text(encoding="utf-8")
 
 # Prefs written to the dedicated profile so the assist can work.
@@ -102,6 +104,33 @@ class Marionette:
             pass
 
 
+def place_window(m, tv):
+    """Move the Firefox window to the TV screen and make it fullscreen there."""
+    try:
+        if display.contains(tv, m.send("WebDriver:GetWindowRect")):
+            return
+        # Restores the window from fullscreen, moves it, then fullscreen again
+        # (now on the TV). Works in kiosk mode too.
+        m.send("WebDriver:SetWindowRect", {"x": tv["x"], "y": tv["y"], "width": tv["w"], "height": tv["h"]})
+        m.send("WebDriver:FullscreenWindow")
+        time.sleep(0.3)
+        r = m.send("WebDriver:GetWindowRect")
+        if display.contains(tv, r):
+            log("moved Firefox to the TV (%s)" % tv["name"])
+            return
+        log("Firefox stayed at %d,%d - asking the window manager to move it" % (r["x"], r["y"]))
+    except MarionetteError as e:
+        log("could not move the window via Firefox: %s" % e)
+    if display.move_with_wm(tv, timeout=3):
+        time.sleep(0.5)
+        try:
+            r = m.send("WebDriver:GetWindowRect")
+            log("window manager move: %s" % ("OK, Firefox is on the TV" if display.contains(tv, r)
+                                             else "failed, window still at %d,%d" % (r["x"], r["y"])))
+        except MarionetteError:
+            pass
+
+
 def connect(port, keep_going, timeout=15.0):
     """Wait for Firefox to open the Marionette port."""
     deadline = time.time() + timeout
@@ -113,9 +142,10 @@ def connect(port, keep_going, timeout=15.0):
     return None
 
 
-def assist(port, keep_going, url, fast_secs=60, on_status=None):
+def assist(port, keep_going, url, tv=None, fast_secs=60, on_status=None):
     """Open `url` in the Firefox listening on `port` (started on about:blank) and
     keep its player fullscreen/playing until keep_going() turns False or Firefox exits.
+    If `tv` (a monitor from display.find_tv) is given, the window is moved there first.
 
     Checks every second for the first `fast_secs` seconds, then every 5 s (so the
     player goes back to fullscreen if something knocks it out).
@@ -130,6 +160,8 @@ def assist(port, keep_going, url, fast_secs=60, on_status=None):
     try:
         try:
             m.start_session()
+            if tv:
+                place_window(m, tv)
             # pageLoadStrategy "none": returns at once, doesn't wait for the ads.
             m.send("WebDriver:Navigate", {"url": url})
         except (OSError, MarionetteError) as e:

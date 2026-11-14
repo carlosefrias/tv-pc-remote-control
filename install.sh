@@ -15,10 +15,10 @@ fi
 command -v python3 >/dev/null || { echo "python3 is required"; exit 1; }
 command -v firefox >/dev/null || echo "WARNING: firefox not found in PATH (set firefox_cmd in $CONF/config.json)"
 
-# QR code tool, so the phone can just scan the link.
-if ! command -v qrencode >/dev/null; then
-  echo "Installing qrencode (shows the QR code for the phone)..."
-  sudo apt-get install -y qrencode >/dev/null || echo "Could not install qrencode - the link will be shown as text."
+# qrencode: QR code for the phone. wmctrl: helps move Firefox to the TV screen.
+if ! command -v qrencode >/dev/null || ! command -v wmctrl >/dev/null; then
+  echo "Installing qrencode and wmctrl..."
+  sudo apt-get install -y qrencode wmctrl >/dev/null || echo "Could not install qrencode/wmctrl - continuing without them."
 fi
 
 mkdir -p "$CONF" "$(dirname "$AUTOSTART")"

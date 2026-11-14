@@ -14,7 +14,7 @@ cd ~/tv-pc-home-remote
 ```
 
 Run it as your normal user, not with `sudo`. It asks for your password once. The installer:
-- installs `qrencode`, which draws the QR code for the phone
+- installs `qrencode`, which draws the QR code for the phone, and `wmctrl`, which helps move Firefox to the TV screen
 - adds an autostart entry, so the server starts every time you log in to the desktop
 - creates `~/.config/tv-remote/` (`config.json` holds the token and settings, `channels.txt` holds the channels)
 - opens the server port in the firewall, if the firewall (`ufw`) is on
@@ -69,6 +69,7 @@ The QR code contains a secret key (after `#k=`), which the phone remembers. **Ke
 | Using the old home-network link | `./show-qr.sh --local` shows it. It only works if the router lets Wi-Fi devices see each other, and the firewall must allow the port (`sudo ufw allow 8080/tcp`). |
 | No QR code, only a link | Run `sudo apt install qrencode`, then `./show-qr.sh`. |
 | A channel shows the whole page, not just the video | Pick it again. If it keeps happening, check the `fullscreen:` lines in the log. |
+| The channel opens on the laptop's screen, not the TV | Check the `display:` lines in the log. If the TV wasn't detected, set `tv_display` to its output name (see `xrandr --listmonitors`). Check `wmctrl` is installed. |
 
 ## Channels
 
@@ -106,6 +107,17 @@ One-time setup: in the repository's **Settings → Pages**, set **Source** to **
 
 The repository is public, but there are no secrets in it. The token, the relay key and `config.json` are created on the laptop, in `~/.config/tv-remote/`, and never committed.
 
+## Which screen shows the channel
+
+When the laptop and the TV form one extended desktop, Firefox would open on the laptop's own screen. So on every channel change, the server finds the TV and moves Firefox there before opening the channel:
+
+1. **Finding the TV:** `xrandr --listmonitors` lists the screens. The TV is the external output (`HDMI-…`, `DP-…`) rather than the built-in panel (`eDP-…`, `LVDS…`). If there are several external screens, it picks the physically biggest. With a single screen, or mirrored screens, nothing needs to move.
+2. **Moving Firefox:** through Marionette, the server moves the window to the TV's position and makes it full screen there. If the window manager refuses, plan B uses `wmctrl` (installed by `install.sh`).
+
+The log shows the decision, for example `display: screens: eDP-1 1920x1080+0+0, HDMI-1 1920x1080+1920+0 -> TV is HDMI-1`, followed by `moved Firefox to the TV (HDMI-1)`.
+
+To choose the screen yourself, set `tv_display` in `config.json` to the output name (see `xrandr --listmonitors`). Set it to `"none"` to turn this off. Moving windows needs the normal **X11** Cinnamon session; it may not work in the experimental Wayland session.
+
 ## How the player goes full screen
 
 Firefox only lets a page go full screen after a real click, so the server controls Firefox through **Marionette**, Firefox's built-in remote-control protocol. It is enabled with `--marionette` and only listens on `localhost`. When you pick a channel:
@@ -132,6 +144,7 @@ It was tested in Firefox 149: RTP 1, RTP 2 and RTP Notícias go full screen and 
 | `dedicated_profile` | `true` | uses a separate Firefox profile with autoplay allowed and no "restore session" prompt |
 | `fullscreen_player` | `true` | puts only the video player in full screen (needs `dedicated_profile`) |
 | `marionette_port` | `2828` | local port used to control Firefox |
+| `tv_display` | `auto` | screen that shows the channel: `auto` (the external TV), an output name such as `HDMI-1`, or `none` |
 | `relay` | `true` | control through the internet via ntfy (see above) |
 | `relay_server` | `https://ntfy.sh` | ntfy server to use (could be self-hosted) |
 | `relay_secret` | random | key shared with the phone through the QR code; delete it to revoke all phones |
