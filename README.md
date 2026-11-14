@@ -35,7 +35,7 @@ The phone app is a web page, so there's nothing to install from an app store. Th
      █ ███ █ ▀█▄▀▄ █ ███ █
      ...
 
-     Link: https://carlosefrias.github.io/tv-remote/#k=AbC123xyz...
+     Link: https://carlosefrias.github.io/tv-pc-remote-control/#k=AbC123xyz...
    ```
 
 2. **Scan the QR code with the phone's camera** and tap the link that appears. If the camera app doesn't recognise QR codes, use Google Lens.
@@ -83,7 +83,7 @@ Each line is `Name | URL`, and the file order is the grid order. Changes are pic
 
 ## How the phone reaches the laptop
 
-The home router (a Mercusys MB115-4G, 4G) isolates Wi-Fi devices from each other, and a 4G connection doesn't accept connections coming in from the internet. So the phone and the laptop talk through **[ntfy.sh](https://ntfy.sh)**, a free public message service that needs no account:
+Many routers isolate Wi-Fi devices from each other ("AP isolation"), and 4G connections don't accept connections coming in from the internet. So the phone and the laptop talk through **[ntfy.sh](https://ntfy.sh)**, a free public message service that needs no account:
 
 ```
 phone ──HTTPS──▶ ntfy.sh topic "cmd" ──stream──▶ laptop   (commands)
@@ -100,18 +100,11 @@ The protocol is implemented in [`server/relay.py`](server/relay.py) on the lapto
 
 ### Publishing the phone app
 
-The phone app is hosted on GitHub Pages, in the **public** repository `carlosefrias/tv-remote`. That repository contains only the `web/` folder: no server code, and no secrets. After changing anything in `web/`, publish it from a computer with git access to GitHub:
+The phone app (the `web/` folder) is hosted on GitHub Pages at `https://carlosefrias.github.io/tv-pc-remote-control/` (setting `app_url` in `config.json`). The workflow [`.github/workflows/pages.yml`](.github/workflows/pages.yml) publishes it automatically on every push to `master`, so changes to `web/` go live a minute or two after `git push`.
 
-```bash
-./publish-app.sh
-```
+One-time setup: in the repository's **Settings → Pages**, set **Source** to **GitHub Actions**.
 
-One-time setup on github.com:
-1. Create the public repository `tv-remote`.
-2. Run `./publish-app.sh`.
-3. In the repository's **Settings → Pages**, set **Source: Deploy from a branch**, branch `main`, folder `/ (root)`.
-
-The app is then at `https://carlosefrias.github.io/tv-remote/` (setting `app_url` in `config.json`).
+The repository is public, but there are no secrets in it. The token, the relay key and `config.json` are created on the laptop, in `~/.config/tv-remote/`, and never committed.
 
 ## How the player goes full screen
 
@@ -142,7 +135,7 @@ It was tested in Firefox 149: RTP 1, RTP 2 and RTP Notícias go full screen and 
 | `relay` | `true` | control through the internet via ntfy (see above) |
 | `relay_server` | `https://ntfy.sh` | ntfy server to use (could be self-hosted) |
 | `relay_secret` | random | key shared with the phone through the QR code; delete it to revoke all phones |
-| `app_url` | `https://carlosefrias.github.io/tv-remote/` | where the phone app is published |
+| `app_url` | `https://carlosefrias.github.io/tv-pc-remote-control/` | where the phone app is published |
 | `shutdown_cmd` | `["systemctl","poweroff"]` | command used by the power button |
 | `volume_step` | `5%` | volume step (uses `pactl`, falls back to `amixer`) |
 

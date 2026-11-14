@@ -49,7 +49,7 @@ DEFAULT_CONFIG = {
     "relay": True,
     "relay_server": "https://ntfy.sh",
     "relay_secret": "",  # generated on first run; travels only inside the QR code
-    "app_url": "https://carlosefrias.github.io/tv-remote/",
+    "app_url": "https://carlosefrias.github.io/tv-pc-remote-control/",
 }
 
 CHANNELS_HEADER = """\
