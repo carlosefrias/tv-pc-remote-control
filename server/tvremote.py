@@ -55,6 +55,11 @@ FIREFOX_PREFS = {
     "browser.shell.checkDefaultBrowser": False,
     "browser.aboutwelcome.enabled": False,
     "browser.startup.homepage_override.mstone": "ignore",
+    "startup.homepage_welcome_url": "",
+    "startup.homepage_welcome_url.additional": "",
+    "trailhead.firstrun.didSeeAboutWelcome": True,
+    "browser.translations.automaticallyPopup": False,  # no "translate page?" over the video
+    "signon.rememberSignons": False,
     "datareporting.policy.dataSubmissionPolicyBypassNotification": True,
     "toolkit.telemetry.reportingPolicy.firstRun": False,
     "media.autoplay.default": 0,          # allow audio+video autoplay

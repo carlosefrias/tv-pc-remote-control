@@ -52,11 +52,9 @@
   function fail(err) { toast(err.message || 'Sem ligação ao portátil', true); }
 
   // ---- grid ----
-  function colorFor(name) {
-    var h = 0;
-    for (var i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % 360;
-    return 'hsl(' + h + ', 45%, 32%)';
-  }
+  var PALETTE = ['#1f5fbf', '#2e7d4f', '#b3541e', '#7b3fa8', '#b02a4a', '#0f7c86',
+                 '#8a6d1a', '#4a5bb0', '#6b8e23', '#a23b8f', '#c0392b', '#2c6e8f'];
+  function colorFor(index) { return PALETTE[index % PALETTE.length]; }
 
   function renderGrid() {
     grid.innerHTML = '';
@@ -64,10 +62,10 @@
       grid.innerHTML = '<div class="empty">Sem canais. Toque em Editar para adicionar.</div>';
       return;
     }
-    channels.forEach(function (ch) {
+    channels.forEach(function (ch, i) {
       var b = document.createElement('button');
       b.className = 'tile' + (ch.id === current ? ' current' : '');
-      b.style.background = colorFor(ch.name);
+      b.style.background = colorFor(i);
       b.textContent = ch.name;
       b.onclick = function () { play(ch, b); };
       grid.appendChild(b);
@@ -136,6 +134,8 @@
     grid.className = 'grid' + (on ? ' hidden' : '');
     controls.className = on ? 'hidden' : '';
     $('editBtn').className = on ? 'ghost hidden' : 'ghost';
+    $('toast').className = 'toast';
+    window.scrollTo(0, 0);
     if (on) {
       rows.innerHTML = '';
       channels.forEach(function (ch) { addRow(ch.name, ch.url); });
