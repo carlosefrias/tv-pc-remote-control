@@ -19,6 +19,8 @@ from http import HTTPStatus
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
+import fullscreen
+
 ROOT = Path(__file__).resolve().parent.parent
 WEB_DIR = ROOT / "web"
 CONFIG_DIR = Path(os.environ.get("TVREMOTE_CONFIG_DIR", Path.home() / ".config" / "tv-remote"))
@@ -35,6 +37,10 @@ DEFAULT_CONFIG = {
     # Dedicated profile: no "restore session?" prompt after we kill Firefox,
     # autoplay allowed, no first-run pages. Set false to use your normal profile.
     "dedicated_profile": True,
+    # Put the channel's video player itself in fullscreen (not the whole page),
+    # start it if it waits for a click, and unmute it. Needs dedicated_profile.
+    "fullscreen_player": True,
+    "marionette_port": 2828,
     "shutdown_cmd": ["systemctl", "poweroff"],
     "volume_step": "5%",
 }
@@ -73,7 +79,8 @@ FIREFOX_PREFS = {
 }
 
 lock = threading.Lock()
-state = {"current": None}
+# gen increases on every play/stop so the previous channel's fullscreen helper stops.
+state = {"current": None, "gen": 0}
 
 
 # --------------------------------------------------------------------------- config
@@ -125,12 +132,33 @@ def write_channels(items):
 
 # --------------------------------------------------------------------------- actions
 
-def prepare_profile():
+def use_fullscreen_helper(cfg):
+    return cfg.get("fullscreen_player", True) and cfg.get("dedicated_profile", True)
+
+
+def prepare_profile(cfg):
     PROFILE_DIR.mkdir(parents=True, exist_ok=True)
-    lines = []
-    for k, v in FIREFOX_PREFS.items():
-        lines.append('user_pref("%s", %s);' % (k, json.dumps(v)))
+    prefs = dict(FIREFOX_PREFS)
+    if use_fullscreen_helper(cfg):
+        prefs.update(fullscreen.PREFS)
+        prefs["marionette.port"] = int(cfg.get("marionette_port", 2828))
+    lines = ['user_pref("%s", %s);' % (k, json.dumps(v)) for k, v in prefs.items()]
     (PROFILE_DIR / "user.js").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def firefox_command(cfg, url, helper=False):
+    """helper=True: start with Marionette on about:blank; the fullscreen helper
+    then opens `url` itself (much faster than waiting for the page to load)."""
+    cmd = [cfg["firefox_cmd"]]
+    if cfg.get("dedicated_profile", True):
+        prepare_profile(cfg)
+        cmd += ["--profile", str(PROFILE_DIR), "--no-remote"]
+        if helper:
+            cmd += ["--marionette"]
+            url = "about:blank"
+    if cfg.get("kiosk", True):
+        cmd += ["--kiosk"]
+    return cmd + [url]
 
 
 def kill_firefox():
@@ -152,31 +180,47 @@ def kill_firefox():
     time.sleep(0.3)
 
 
-def launch_firefox(cfg, url):
-    cmd = [cfg["firefox_cmd"]]
-    if cfg.get("dedicated_profile", True):
-        prepare_profile()
-        cmd += ["--profile", str(PROFILE_DIR), "--no-remote"]
-    if cfg.get("kiosk", True):
-        cmd += ["--kiosk"]
-    cmd += [url]
+def launch_firefox(cfg, url, helper=False):
     env = dict(os.environ)
     env.setdefault("DISPLAY", ":0")
     subprocess.Popen(
-        cmd, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        firefox_command(cfg, url, helper), env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
         stdin=subprocess.DEVNULL, start_new_session=True,
     )
 
 
+def start_fullscreen_helper(cfg, gen, url):
+    def keep_going():
+        return state["gen"] == gen
+
+    def run():
+        port = int(cfg.get("marionette_port", 2828))
+        if fullscreen.assist(port, keep_going, url):
+            return
+        # Couldn't control Firefox: at least show the page (whole page, kiosk).
+        with lock:
+            if keep_going():
+                fullscreen.log("falling back to opening the page without the helper")
+                kill_firefox()
+                launch_firefox(cfg, url, helper=False)
+
+    threading.Thread(target=run, daemon=True).start()
+
+
 def play(cfg, channel):
     with lock:
+        state["gen"] += 1
         kill_firefox()
-        launch_firefox(cfg, channel["url"])
+        helper = use_fullscreen_helper(cfg)
+        launch_firefox(cfg, channel["url"], helper)
         state["current"] = channel["id"]
+        if helper:
+            start_fullscreen_helper(cfg, state["gen"], channel["url"])
 
 
 def stop():
     with lock:
+        state["gen"] += 1
         kill_firefox()
         state["current"] = None
 
