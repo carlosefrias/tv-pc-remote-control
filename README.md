@@ -107,7 +107,7 @@ Not included for now (checked in November 2026):
 |---|---|
 | SIC, TVI (and V+, TVI Ficção, TVI Reality, TVI Internacional) | The live stream needs an account (OPTO / TVI Player). The player never starts in the TV's Firefox. |
 | SIC Notícias | The page at `sicnoticias.pt/agora` uses reCAPTCHA bot detection. With the automated Firefox the player never gets video. |
-| CMTV, NOW | Need an account ("Iniciar sessão"). |
+| CMTV, NOW | No live stream on their websites (`cmjornal.pt/cmtv`, `nowcanal.pt` only have articles and clips). The live channels are only on the TV operators (MEO, NOS…). |
 | Porto Canal | The site blocks automated browsers (Cloudflare). |
 
 Sites such as cxtv re-stream channels without the broadcasters' permission, so they are not used here.
