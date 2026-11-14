@@ -82,9 +82,13 @@ if (!box) {
   }
 }
 
-// An ad is playing if another video is running or the player flags it.
+// An ad is playing if another video is running or the player flags an ad *in
+// progress* (jw-flag-ads, vjs-ad-playing/-loading, YouTube's ad-showing...).
+// Classes that only mean "ads plugin present" (vjs-ad-controls, vjs-ads-ready)
+// must not count, or the player would never be started.
+var AD_FLAGS = /(^|\s)(jw-flag-ads|[\w-]*ad-(playing|loading|active|showing))(\s|$)/i;
 var adPlaying = videos.some(function (v) { return v !== main && !v.paused && v.currentTime > 0; }) ||
-  /(^|[\s_-])(ads?|ad-playing|ad-active|ad-loading)([\s_-]|$)/i.test(String(box.className));
+  AD_FLAGS.test(String(box.className));
 res.ad = adPlaying;
 res.player = (box.id ? '#' + box.id : '') + (typeof box.className === 'string' ? '.' + box.className.trim().split(/\s+/)[0] : '');
 

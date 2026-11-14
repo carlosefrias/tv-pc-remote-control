@@ -96,6 +96,7 @@ The TV is in **Germany**, so what matters is what the broadcasters allow **outsi
 | CNN Portugal | `cnnportugal.iol.pt/direto` |
 | ARTV Parlamento | `canal.parlamento.pt` |
 | Euronews (Portuguese) | `pt.euronews.com/live` |
+| Sky News (English) | `news.sky.com/watch-live` |
 
 **Euronews, first time only:** the site shows a cookie notice before it loads the video. On the TV, click **"Continuar sem aceitar"** (or "Aceitar e fechar") once with the laptop's mouse. The choice is kept in the TV's Firefox profile.
 
