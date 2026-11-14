@@ -13,14 +13,63 @@ cd ~/tv-pc-home-remote
 ./install.sh
 ```
 
-The installer:
-- adds an autostart entry, so the server starts when you log in to the desktop
+Run it as your normal user, not with `sudo`. It asks for your password once. The installer:
+- installs `qrencode`, which draws the QR code for the phone
+- adds an autostart entry, so the server starts every time you log in to the desktop
 - creates `~/.config/tv-remote/` (`config.json` holds the token and settings, `channels.txt` holds the channels)
-- prints the URL for your phone, e.g. `http://192.168.1.50:8080/?t=AbC123...`, and a QR code if `qrencode` is installed
+- opens the server port in the firewall, if the firewall (`ufw`) is on
+- shows the **QR code** for your phone (see below)
 
-On the phone, open that URL in Chrome and choose **⋮ → Add to Home screen**. On an iPhone, use Safari and choose **Share → Add to Home Screen**.
+## How to use
 
-> Tip: give the laptop a fixed IP (a DHCP reservation in your router) so the bookmark keeps working.
+### 1. Connect your phone (once)
+
+The phone app is a web page served by the laptop, so there's nothing to install from an app store.
+
+1. Put the phone on the **same Wi-Fi** as the laptop.
+2. On the laptop, run `./install.sh`, or `./show-qr.sh` if it is already installed. A QR code appears in the terminal, on the TV:
+
+   ```
+     Scan this with the phone's camera (phone on the same Wi-Fi as this laptop):
+
+     █▀▀▀▀▀█ ▄▀▄█▀ █▀▀▀▀▀█
+     █ ███ █ ▀█▄▀▄ █ ███ █
+     ...
+
+     Link: http://192.168.1.50:8080/?t=AbC123xyz
+   ```
+
+3. **Scan the QR code with the phone's camera** and tap the link that appears. If the camera app doesn't recognise QR codes, use Google Lens.
+4. The channel grid opens. Turn it into an app icon:
+   - **Android (Chrome):** menu **⋮** → **Add to Home screen** (or **Install app**)
+   - **iPhone (Safari):** **Share** → **Add to Home Screen**
+
+From now on, just tap the **TV** icon on the phone's home screen. To add another phone, for example for someone else in the house, run `./show-qr.sh` on the laptop and scan the code again.
+
+The link includes a secret token (`?t=...`), which stops other devices on your Wi-Fi from controlling the laptop. The phone remembers it after the first time.
+
+> **Tip:** give the laptop a fixed IP address in your router (look for "DHCP reservation"). Otherwise the router may give it a new address one day, and the icon on the phone will stop working. If that happens, run `./show-qr.sh` and scan again.
+
+### 2. Watch TV
+
+| On the phone | What happens on the TV |
+|---|---|
+| Tap a channel | Firefox closes and reopens on that channel, with the video player full screen and sound on. The tile is marked **● AO VIVO**. |
+| 🔉 / 🔊 | Volume down / up |
+| 🔇 | Mute / unmute |
+| ⏹ | Stops: closes Firefox |
+| ⏻ | Shuts down the laptop (asks for confirmation first) |
+| **Editar** | Add, rename, reorder (↑ ↓) or delete channels, then **Guardar** |
+
+### If it doesn't work
+
+| Problem | Fix |
+|---|---|
+| The page doesn't open on the phone | Check the phone is on the same Wi-Fi. Check the server is running: `tail ~/.config/tv-remote/server.log`. If needed, run `./install.sh` again. |
+| "Token inválido" on the phone | Run `./show-qr.sh` on the laptop and scan the code again. |
+| It worked before, but not anymore | The laptop probably got a new IP address. Run `./show-qr.sh` and scan again, then set a fixed IP in the router. |
+| No QR code, only a link | Run `sudo apt install qrencode`, then `./show-qr.sh`. |
+| A channel shows the whole page, not just the video | Pick it again. If it keeps happening, check the `fullscreen:` lines in the log. |
 
 ## Channels
 
@@ -67,7 +116,8 @@ Restart the server after changing settings. The simplest way is to run `./instal
 ## Run manually / debug
 
 ```bash
-python3 server/tvremote.py          # prints the phone URL
+./show-qr.sh                        # QR code + link for the phone
+python3 server/tvremote.py          # run the server in the foreground
 tail -f ~/.config/tv-remote/server.log
 ```
 
