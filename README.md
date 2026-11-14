@@ -88,7 +88,7 @@ A default channel you deleted is **not** added back. The defaults already offere
 
 ### Channels in the default list
 
-The TV is in **Germany**, so what matters is what the broadcasters allow **outside Portugal**. All of these are official, free live streams that work from abroad. Each was tested from the TV's home network in Germany, in Firefox with the full-screen helper:
+The TV is in **Germany**, so what matters is what the broadcasters allow **outside Portugal**. The home internet is a 4G router with a **UK SIM card** (roaming), so websites see the connection as being in the **UK**, not Germany. German services such as Joyn treat it as "abroad" too. All of these are official, free live streams that work from abroad. Each was tested from the TV's home network, in Firefox with the full-screen helper:
 
 | Channel | Page |
 |---|---|
