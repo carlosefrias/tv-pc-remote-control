@@ -1,3 +1,7 @@
 __pycache__/
 *.pyc
 .vscode/
+# local config/secrets must never be committed
+config.json
+channels.txt
+channels.seen

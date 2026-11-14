@@ -82,13 +82,9 @@ CNN Portugal | https://cnnportugal.iol.pt/direto
 
 Each line is `Name | URL`, and the file order is the grid order. Changes are picked up right away, with no restart needed.
 
-When new channels are added to the default list ([`server/channels.default.txt`](server/channels.default.txt)), add them to your own list with:
+When new channels are added to the default list ([`server/channels.default.txt`](server/channels.default.txt)), `./install.sh` adds them to your list automatically, so after a `git pull`, just run `./install.sh`. It only adds new channels, at the end. Your own channels, names and order stay as they are.
 
-```bash
-./update-channels.sh
-```
-
-It only adds the missing channels, at the end. Your own channels, names and order stay as they are.
+A default channel you deleted is **not** added back. The defaults already offered are remembered in `~/.config/tv-remote/channels.seen`. To get every default channel offered again, delete that file and run `./install.sh`. The same update also runs on its own with `./update-channels.sh`.
 
 ### Channels in the default list
 

@@ -22,7 +22,10 @@ if ! command -v qrencode >/dev/null || ! command -v wmctrl >/dev/null; then
 fi
 
 mkdir -p "$CONF" "$(dirname "$AUTOSTART")"
-chmod +x "$REPO/server/tvremote.py" "$REPO/show-qr.sh"
+chmod +x "$REPO/server/tvremote.py" "$REPO/show-qr.sh" "$REPO/update-channels.sh"
+
+# Add any new default channels to your list (keeps your own channels and order).
+"$REPO/update-channels.sh"
 
 # Start automatically with the desktop session (so it has access to the display).
 cat > "$AUTOSTART" <<EOF
