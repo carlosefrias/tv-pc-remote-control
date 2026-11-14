@@ -88,7 +88,7 @@ A default channel you deleted is **not** added back. The defaults already offere
 
 ### Channels in the default list
 
-All of these are official, free live streams (in Portugal). Each was tested in Firefox with the full-screen helper:
+The TV is in **Germany**, so what matters is what the broadcasters allow **outside Portugal**. All of these are official, free live streams that work from abroad. Each was tested from the TV's home network in Germany, in Firefox with the full-screen helper:
 
 | Channel | Page |
 |---|---|
@@ -99,14 +99,14 @@ All of these are official, free live streams (in Portugal). Each was tested in F
 
 **Euronews, first time only:** the site shows a cookie notice before it loads the video. On the TV, click **"Continuar sem aceitar"** (or "Aceitar e fechar") once with the laptop's mouse. The choice is kept in the TV's Firefox profile.
 
-RTP Desporto 1 only has pictures while an event is on.
+RTP Desporto 1 only has pictures while an event is on. On the RTP channels, some programmes (for example football matches and some films) are not shown outside Portugal for rights reasons. RTP shows a notice instead while they are on.
 
 Not included for now (checked in November 2026):
 
 | Channel | Why |
 |---|---|
-| SIC, TVI (and V+, TVI Ficção, TVI Reality, TVI Internacional) | The live stream needs an account (OPTO / TVI Player). The player never starts in the TV's Firefox. |
-| SIC Notícias | The page at `sicnoticias.pt/agora` uses reCAPTCHA bot detection. With the automated Firefox the player never gets video. |
+| SIC, TVI (and V+, TVI Ficção, TVI Reality, TVI Internacional) | Outside Portugal they are only on paid international subscriptions: OPTO for SIC, TVI Player Internacional for TVI. TVI Player shows "Subscreva já o TVI Player Internacional". |
+| SIC Notícias | Most likely geo-blocked outside Portugal: the stream's playlist loads, but no video ever arrives. Abroad, SIC channels are offered through OPTO. |
 | CMTV, NOW | No live stream on their websites (`cmjornal.pt/cmtv`, `nowcanal.pt` only have articles and clips). The live channels are only on the TV operators (MEO, NOS…). |
 | Porto Canal | The site blocks automated browsers (Cloudflare). |
 
