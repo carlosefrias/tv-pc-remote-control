@@ -21,6 +21,13 @@ header {
 
 h1 { margin: 0; font-size: 20px; letter-spacing: .5px; }
 
+.status { font-size: 12px; font-weight: 400; letter-spacing: 0; margin-left: 8px; color: #9aa4b1; }
+.status:empty { display: none; }
+.status::before { content: "●"; margin-right: 4px; }
+.status.good::before { color: #3fb950; }
+.status.wait::before { color: #d29922; }
+.status.bad::before { color: #f85149; }
+
 button {
   font: inherit;
   color: inherit;

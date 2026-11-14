@@ -3,7 +3,7 @@
 Control the TV laptop (Linux Mint + Firefox over HDMI) from your phone.
 
 - **Laptop** (`server/tvremote.py`): small Python server that uses only the standard library. When you pick a channel it closes all Firefox windows, reopens Firefox in **kiosk** mode on that channel's page, and puts the **video player itself in full screen**, so the TV shows only the video. It also controls the volume, stops playback and shuts the laptop down.
-- **Phone** (`web/`): web app served by the laptop. It shows a grid of channels plus volume, stop and power buttons, and has an edit mode for the channel list. It works on Android and iOS. Add it to the home screen to use it like an app.
+- **Phone** (`web/`): web app. It shows a grid of channels plus volume, stop and power buttons, and has an edit mode for the channel list. It works on Android and iOS. Add it to the home screen to use it like an app. It reaches the laptop **through the internet**, so it works even when the Wi-Fi isolates devices from each other, as the home 4G router does. See [How the phone reaches the laptop](#how-the-phone-reaches-the-laptop).
 
 ## Install (on the laptop)
 
@@ -24,31 +24,28 @@ Run it as your normal user, not with `sudo`. It asks for your password once. The
 
 ### 1. Connect your phone (once)
 
-The phone app is a web page served by the laptop, so there's nothing to install from an app store.
+The phone app is a web page, so there's nothing to install from an app store. The phone can be on any network: the home Wi-Fi, or mobile data.
 
-1. Put the phone on the **same Wi-Fi** as the laptop.
-2. On the laptop, run `./install.sh`, or `./show-qr.sh` if it is already installed. A QR code appears in the terminal, on the TV:
+1. On the laptop, run `./install.sh`, or `./show-qr.sh` if it is already installed. A QR code appears in the terminal, on the TV:
 
    ```
-     Scan this with the phone's camera (phone on the same Wi-Fi as this laptop):
+     Scan this with the phone's camera (works on any network, through the internet):
 
      █▀▀▀▀▀█ ▄▀▄█▀ █▀▀▀▀▀█
      █ ███ █ ▀█▄▀▄ █ ███ █
      ...
 
-     Link: http://192.168.1.50:8080/?t=AbC123xyz
+     Link: https://carlosefrias.github.io/tv-remote/#k=AbC123xyz...
    ```
 
-3. **Scan the QR code with the phone's camera** and tap the link that appears. If the camera app doesn't recognise QR codes, use Google Lens.
-4. The channel grid opens. Turn it into an app icon:
+2. **Scan the QR code with the phone's camera** and tap the link that appears. If the camera app doesn't recognise QR codes, use Google Lens.
+3. The channel grid opens, and next to **TV** it shows **● ligado**. Turn it into an app icon:
    - **Android (Chrome):** menu **⋮** → **Add to Home screen** (or **Install app**)
    - **iPhone (Safari):** **Share** → **Add to Home Screen**
 
 From now on, just tap the **TV** icon on the phone's home screen. To add another phone, for example for someone else in the house, run `./show-qr.sh` on the laptop and scan the code again.
 
-The link includes a secret token (`?t=...`), which stops other devices on your Wi-Fi from controlling the laptop. The phone remembers it after the first time.
-
-> **Tip:** give the laptop a fixed IP address in your router (look for "DHCP reservation"). Otherwise the router may give it a new address one day, and the icon on the phone will stop working. If that happens, run `./show-qr.sh` and scan again.
+The QR code contains a secret key (after `#k=`), which the phone remembers. **Keep the code private: whoever scans it can control the TV.** To revoke all phones, delete `relay_secret` from `~/.config/tv-remote/config.json`, restart the server (`./install.sh`), and scan the new code with each phone.
 
 ### 2. Watch TV
 
@@ -65,9 +62,11 @@ The link includes a secret token (`?t=...`), which stops other devices on your W
 
 | Problem | Fix |
 |---|---|
-| The page doesn't open on the phone ("page unreachable") | 1. The phone must be on the **same Wi-Fi** as the laptop, not on mobile data. 2. The firewall may be blocking it. On the laptop, run `sudo ufw allow 8080/tcp`. 3. `./show-qr.sh` warns you if the server isn't running. 4. Guest Wi-Fi networks often block devices from reaching each other, so use the main network. |
-| "Token inválido" on the phone | Run `./show-qr.sh` on the laptop and scan the code again. |
-| It worked before, but not anymore | The laptop probably got a new IP address. Run `./show-qr.sh` and scan again, then set a fixed IP in the router. |
+| "O portátil não respondeu" / **● sem resposta** | The laptop is off, has no internet, or the server isn't running. `./show-qr.sh` warns you if the server isn't running. Check `tail ~/.config/tv-remote/server.log`: it should say `relay: connected to https://ntfy.sh`. |
+| "A hora do telemóvel está errada" | Set the phone's clock to automatic. Commands are only accepted if the phone and laptop clocks are within 5 minutes of each other. |
+| "Limite diário de mensagens" | ntfy.sh allows 250 messages a day for all your devices together (see below). It resets the next day. |
+| The page itself doesn't open | The phone has no internet, or the app page isn't published yet (see [Publishing the phone app](#publishing-the-phone-app)). |
+| Using the old home-network link | `./show-qr.sh --local` shows it. It only works if the router lets Wi-Fi devices see each other, and the firewall must allow the port (`sudo ufw allow 8080/tcp`). |
 | No QR code, only a link | Run `sudo apt install qrencode`, then `./show-qr.sh`. |
 | A channel shows the whole page, not just the video | Pick it again. If it keeps happening, check the `fullscreen:` lines in the log. |
 
@@ -81,6 +80,38 @@ CNN Portugal | https://cnnportugal.iol.pt/direto
 ```
 
 Each line is `Name | URL`, and the file order is the grid order. Changes are picked up right away, with no restart needed.
+
+## How the phone reaches the laptop
+
+The home router (a Mercusys MB115-4G, 4G) isolates Wi-Fi devices from each other, and a 4G connection doesn't accept connections coming in from the internet. So the phone and the laptop talk through **[ntfy.sh](https://ntfy.sh)**, a free public message service that needs no account:
+
+```
+phone ──HTTPS──▶ ntfy.sh topic "cmd" ──stream──▶ laptop   (commands)
+phone ◀──SSE──── ntfy.sh topic "state" ◀─HTTPS── laptop   (replies)
+```
+
+- **Only outgoing connections:** the laptop keeps one HTTPS connection open to ntfy.sh, so no ports or router settings are needed. In tests, a command took about 1 s from tap to confirmation.
+- **One secret, created on the laptop:** `relay_secret` in `config.json`. The two topic names and the signing key are derived from it. It reaches the phone only inside the QR code, after the `#`, and browsers never send that part to any server.
+- **Signed commands:** every message is signed with HMAC-SHA256. The laptop ignores messages with a wrong signature, messages older than 5 minutes, and repeated messages. Replies are signed too, and are not stored on ntfy.sh (`Cache: no`).
+- **Not encrypted:** ntfy.sh can see the content of the messages, such as channel names and "play channel 3". There are no passwords or personal data in them.
+- **Daily limit:** ntfy.sh allows **250 messages a day**, and the phone and laptop count together because they share the router's internet address. Opening the app or changing channel uses 2 messages, and a volume press uses 1. That's plenty for normal use.
+
+The protocol is implemented in [`server/relay.py`](server/relay.py) on the laptop and in `RelayTransport` in [`web/app.js`](web/app.js) on the phone. To turn it off, set `"relay": false`. The phone then needs the home-network link (`./show-qr.sh --local`).
+
+### Publishing the phone app
+
+The phone app is hosted on GitHub Pages, in the **public** repository `carlosefrias/tv-remote`. That repository contains only the `web/` folder: no server code, and no secrets. After changing anything in `web/`, publish it from a computer with git access to GitHub:
+
+```bash
+./publish-app.sh
+```
+
+One-time setup on github.com:
+1. Create the public repository `tv-remote`.
+2. Run `./publish-app.sh`.
+3. In the repository's **Settings → Pages**, set **Source: Deploy from a branch**, branch `main`, folder `/ (root)`.
+
+The app is then at `https://carlosefrias.github.io/tv-remote/` (setting `app_url` in `config.json`).
 
 ## How the player goes full screen
 
@@ -108,6 +139,10 @@ It was tested in Firefox 149: RTP 1, RTP 2 and RTP Notícias go full screen and 
 | `dedicated_profile` | `true` | uses a separate Firefox profile with autoplay allowed and no "restore session" prompt |
 | `fullscreen_player` | `true` | puts only the video player in full screen (needs `dedicated_profile`) |
 | `marionette_port` | `2828` | local port used to control Firefox |
+| `relay` | `true` | control through the internet via ntfy (see above) |
+| `relay_server` | `https://ntfy.sh` | ntfy server to use (could be self-hosted) |
+| `relay_secret` | random | key shared with the phone through the QR code; delete it to revoke all phones |
+| `app_url` | `https://carlosefrias.github.io/tv-remote/` | where the phone app is published |
 | `shutdown_cmd` | `["systemctl","poweroff"]` | command used by the power button |
 | `volume_step` | `5%` | volume step (uses `pactl`, falls back to `amixer`) |
 
@@ -116,7 +151,8 @@ Restart the server after changing settings. The simplest way is to run `./instal
 ## Run manually / debug
 
 ```bash
-./show-qr.sh                        # QR code + link for the phone
+./show-qr.sh                        # QR code + link for the phone (internet)
+./show-qr.sh --local                # home-network link instead
 python3 server/tvremote.py          # run the server in the foreground
 tail -f ~/.config/tv-remote/server.log
 ```

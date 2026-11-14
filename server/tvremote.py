@@ -20,6 +20,7 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 import fullscreen
+import relay
 
 ROOT = Path(__file__).resolve().parent.parent
 WEB_DIR = ROOT / "web"
@@ -43,6 +44,12 @@ DEFAULT_CONFIG = {
     "marionette_port": 2828,
     "shutdown_cmd": ["systemctl", "poweroff"],
     "volume_step": "5%",
+    # Control through the internet (for Wi-Fi with "AP isolation" / 4G routers):
+    # the phone app is hosted at app_url and talks to the laptop via relay_server.
+    "relay": True,
+    "relay_server": "https://ntfy.sh",
+    "relay_secret": "",  # generated on first run; travels only inside the QR code
+    "app_url": "https://carlosefrias.github.io/tv-remote/",
 }
 
 CHANNELS_HEADER = """\
@@ -87,13 +94,16 @@ state = {"current": None, "gen": 0}
 
 def load_config():
     CONFIG_DIR.mkdir(parents=True, exist_ok=True)
-    cfg = dict(DEFAULT_CONFIG)
-    if CONFIG_FILE.exists():
-        cfg.update(json.loads(CONFIG_FILE.read_text(encoding="utf-8")))
+    saved = json.loads(CONFIG_FILE.read_text(encoding="utf-8")) if CONFIG_FILE.exists() else {}
+    cfg = dict(DEFAULT_CONFIG, **saved)
+    changed = any(k not in saved for k in DEFAULT_CONFIG)  # also adds new settings to old files
     if not cfg.get("token"):
         cfg["token"] = secrets.token_urlsafe(12)
-        CONFIG_FILE.write_text(json.dumps(cfg, indent=2) + "\n", encoding="utf-8")
-    elif not CONFIG_FILE.exists():
+        changed = True
+    if not cfg.get("relay_secret"):
+        cfg["relay_secret"] = secrets.token_urlsafe(24)
+        changed = True
+    if changed:
         CONFIG_FILE.write_text(json.dumps(cfg, indent=2) + "\n", encoding="utf-8")
     return cfg
 
@@ -246,9 +256,48 @@ def volume(cfg, action):
 
 def shutdown(cfg):
     def later():
-        time.sleep(1.0)  # let the HTTP response reach the phone first
+        time.sleep(2.0)  # let the reply reach the phone first
         subprocess.Popen(cfg["shutdown_cmd"])
     threading.Thread(target=later, daemon=True).start()
+
+
+class NotFound(ValueError):
+    pass
+
+
+def api_call(cfg, cmd, args):
+    """All phone commands, shared by the local HTTP API and the internet relay.
+    Raises ValueError (bad input) / NotFound."""
+    if cmd == "channels":
+        return {"channels": read_channels(), "current": state["current"]}
+    if cmd == "save":
+        write_channels(args.get("channels", []))
+        state["current"] = None
+        return {"channels": read_channels(), "current": None}
+    if cmd == "play":
+        channels = read_channels()
+        cid = int(args.get("id", -1))
+        if not 0 <= cid < len(channels):
+            raise NotFound("no such channel")
+        play(cfg, channels[cid])
+    elif cmd == "stop":
+        stop()
+    elif cmd == "volume":
+        volume(cfg, args.get("action"))
+    elif cmd == "shutdown":
+        shutdown(cfg)
+    else:
+        raise NotFound("unknown command")
+    return {"ok": True, "current": state["current"]}
+
+
+def relay_handler(cfg):
+    def handle(cmd, args):
+        try:
+            return api_call(cfg, cmd, args)
+        except FileNotFoundError as e:
+            raise ValueError("command not found on the laptop: %s" % e.filename)
+    return handle
 
 
 # --------------------------------------------------------------------------- http
@@ -287,53 +336,42 @@ class Handler(SimpleHTTPRequestHandler):
             return {}
         return json.loads(self.rfile.read(length).decode("utf-8"))
 
+    # (method, path) -> api_call command
+    ROUTES = {
+        ("GET", "/api/channels"): "channels",
+        ("PUT", "/api/channels"): "save",
+        ("POST", "/api/play"): "play",
+        ("POST", "/api/stop"): "stop",
+        ("POST", "/api/volume"): "volume",
+        ("POST", "/api/shutdown"): "shutdown",
+    }
+
+    def handle_api(self, method):
+        cmd = self.ROUTES.get((method, self.path))
+        if cmd is None:
+            return self.send_json({"error": "not found"}, HTTPStatus.NOT_FOUND)
+        if not self.authorized():
+            return
+        try:
+            body = self.read_body() if method != "GET" else {}
+            self.send_json(api_call(self.cfg, cmd, body if isinstance(body, dict) else {}))
+        except NotFound as e:
+            self.send_json({"error": str(e)}, HTTPStatus.NOT_FOUND)
+        except (ValueError, TypeError, AttributeError) as e:
+            self.send_json({"error": str(e)}, HTTPStatus.BAD_REQUEST)
+        except FileNotFoundError as e:
+            self.send_json({"error": "command not found: %s" % e.filename}, HTTPStatus.INTERNAL_SERVER_ERROR)
+
     def do_GET(self):
         if self.path.startswith("/api/"):
-            if not self.authorized():
-                return
-            if self.path == "/api/channels":
-                return self.send_json({"channels": read_channels(), "current": state["current"]})
-            return self.send_json({"error": "not found"}, HTTPStatus.NOT_FOUND)
+            return self.handle_api("GET")
         return super().do_GET()
 
     def do_PUT(self):
-        if self.path != "/api/channels":
-            return self.send_json({"error": "not found"}, HTTPStatus.NOT_FOUND)
-        if not self.authorized():
-            return
-        try:
-            write_channels(self.read_body().get("channels", []))
-        except (ValueError, TypeError, AttributeError) as e:
-            return self.send_json({"error": str(e)}, HTTPStatus.BAD_REQUEST)
-        state["current"] = None
-        self.send_json({"channels": read_channels(), "current": None})
+        self.handle_api("PUT")
 
     def do_POST(self):
-        if not self.path.startswith("/api/"):
-            return self.send_json({"error": "not found"}, HTTPStatus.NOT_FOUND)
-        if not self.authorized():
-            return
-        try:
-            body = self.read_body()
-            if self.path == "/api/play":
-                channels = read_channels()
-                cid = int(body.get("id", -1))
-                if not 0 <= cid < len(channels):
-                    return self.send_json({"error": "no such channel"}, HTTPStatus.NOT_FOUND)
-                play(self.cfg, channels[cid])
-            elif self.path == "/api/stop":
-                stop()
-            elif self.path == "/api/volume":
-                volume(self.cfg, body.get("action"))
-            elif self.path == "/api/shutdown":
-                shutdown(self.cfg)
-            else:
-                return self.send_json({"error": "not found"}, HTTPStatus.NOT_FOUND)
-        except (ValueError, TypeError) as e:
-            return self.send_json({"error": str(e)}, HTTPStatus.BAD_REQUEST)
-        except FileNotFoundError as e:
-            return self.send_json({"error": "command not found: %s" % e.filename}, HTTPStatus.INTERNAL_SERVER_ERROR)
-        self.send_json({"ok": True, "current": state["current"]})
+        self.handle_api("POST")
 
 
 def local_ips():
@@ -349,9 +387,12 @@ def main():
     read_channels()  # create channels.txt from defaults if missing
     Handler.cfg = cfg
     server = ThreadingHTTPServer(("0.0.0.0", int(cfg["port"])), Handler)
-    print("TV Remote running. Open on your phone:")
+    print("TV Remote running. For the phone link/QR code run ./show-qr.sh")
     for ip in local_ips() or ["<laptop-ip>"]:
-        print("  http://%s:%s/?t=%s" % (ip, cfg["port"], cfg["token"]))
+        print("  home network: http://%s:%s/?t=%s" % (ip, cfg["port"], cfg["token"]))
+    if cfg.get("relay", True):
+        relay.Relay(cfg["relay_server"], cfg["relay_secret"], relay_handler(cfg)).start()
+        print("  internet: via %s (app: %s)" % (cfg["relay_server"], cfg.get("app_url") or "not set"))
     print("Channels file: %s" % CHANNELS_FILE)
     sys.stdout.flush()
     signal.signal(signal.SIGTERM, lambda *_: sys.exit(0))

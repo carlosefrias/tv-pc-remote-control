@@ -1,57 +1,221 @@
-/* TV Remote phone app. Plain ES5 on purpose so it runs on older Android browsers. */
+/* TV Remote phone app. Plain ES5 on purpose so it runs on older Android browsers.
+ *
+ * Two ways to reach the laptop:
+ *  - LocalTransport: HTTP to the laptop itself (page opened as http://<laptop>:8080/?t=TOKEN)
+ *  - RelayTransport: through the internet via a ntfy server (page hosted on GitHub Pages,
+ *    opened as https://.../#k=SECRET). Same protocol as server/relay.py.
+ */
 (function () {
   'use strict';
 
-  var TOKEN_KEY = 'tvremote.token';
-  var token = '';
+  var KEYS = { token: 'tvremote.token', secret: 'tvremote.secret', server: 'tvremote.server', state: 'tvremote.state' };
+  var DEFAULT_RELAY = 'https://ntfy.sh';
+  var transport = null;
   var channels = [];
   var current = null;
+  var lastSync = 0;
 
   var $ = function (id) { return document.getElementById(id); };
   var grid = $('grid'), editor = $('editor'), rows = $('rows'), controls = $('controls');
 
-  // ---- token: taken from ?t=... once, then remembered on this phone ----
-  function initToken() {
-    var m = /[?&]t=([^&]+)/.exec(location.search);
-    if (m) {
-      token = decodeURIComponent(m[1]);
-      try { localStorage.setItem(TOKEN_KEY, token); } catch (e) {}
-      // Keep the token in the URL so "Add to Home screen" also carries it.
-    } else {
-      try { token = localStorage.getItem(TOKEN_KEY) || ''; } catch (e) {}
-    }
+  function store(k, v) {
+    try {
+      if (v === undefined) return localStorage.getItem(k);
+      localStorage.setItem(k, v);
+    } catch (e) {}
+    return null;
   }
 
-  // ---- API ----
-  function api(method, path, body) {
-    var opts = { method: method, headers: { 'X-Token': token } };
-    if (body !== undefined) {
-      opts.headers['Content-Type'] = 'application/json';
-      opts.body = JSON.stringify(body);
-    }
-    return fetch(path, opts).then(function (r) {
-      return r.json().catch(function () { return {}; }).then(function (data) {
-        if (!r.ok) {
-          var msg = data.error || ('Erro ' + r.status);
-          if (r.status === 401) msg = 'Token inválido – abra o link com ?t=TOKEN mostrado no portátil';
-          throw new Error(msg);
-        }
-        return data;
+  // Values come from the link (after # or ?) the first time, then from this phone's storage.
+  function param(name) {
+    var m = new RegExp('[#?&]' + name + '=([^&#]+)').exec(location.hash + '&' + location.search);
+    return m ? decodeURIComponent(m[1]) : null;
+  }
+
+  // ------------------------------------------------------------------ local transport
+  function LocalTransport(token) {
+    var routes = {
+      channels: ['GET', '/api/channels'], save: ['PUT', '/api/channels'], play: ['POST', '/api/play'],
+      stop: ['POST', '/api/stop'], volume: ['POST', '/api/volume'], shutdown: ['POST', '/api/shutdown']
+    };
+    this.mode = 'local';
+    this.request = function (cmd, args) {
+      var r = routes[cmd];
+      var opts = { method: r[0], headers: { 'X-Token': token } };
+      if (r[0] !== 'GET') {
+        opts.headers['Content-Type'] = 'application/json';
+        opts.body = JSON.stringify(args || {});
+      }
+      return fetch(r[1], opts).then(function (res) {
+        return res.json().catch(function () { return {}; }).then(function (data) {
+          if (!res.ok) {
+            var msg = data.error || ('Erro ' + res.status);
+            if (res.status === 401) msg = 'Token inválido: leia de novo o QR code (./show-qr.sh no portátil)';
+            throw new Error(msg);
+          }
+          return data;
+        });
+      }, function () { throw new Error('Sem ligação ao portátil'); });
+    };
+    this.send = this.request;
+  }
+
+  // ------------------------------------------------------------------ relay transport
+  var enc = window.TextEncoder ? new TextEncoder() : null;
+  var CHUNK = 3000;
+
+  function hex(buf) {
+    var b = new Uint8Array(buf), s = '';
+    for (var i = 0; i < b.length; i++) s += ('0' + b[i].toString(16)).slice(-2);
+    return s;
+  }
+  function hexBytes(h) {
+    var out = new Uint8Array(h.length / 2);
+    for (var i = 0; i < out.length; i++) out[i] = parseInt(h.substr(i * 2, 2), 16);
+    return out;
+  }
+  function randomHex(n) { return hex(crypto.getRandomValues(new Uint8Array(n))); }
+  function hmacKey(raw) {
+    return crypto.subtle.importKey('raw', raw, { name: 'HMAC', hash: { name: 'SHA-256' } }, false, ['sign']);
+  }
+  function hmacHex(key, text) { return crypto.subtle.sign('HMAC', key, enc.encode(text)).then(hex); }
+  // JSON with non-ASCII escaped (like Python's json.dumps), so 1 char = 1 byte on the wire.
+  function asciiJSON(obj) {
+    return JSON.stringify(obj).replace(/[\u007f-￿]/g, function (c) {
+      return '\\u' + ('000' + c.charCodeAt(0).toString(16)).slice(-4);
+    });
+  }
+
+  function derive(secret) {
+    return hmacKey(enc.encode(secret)).then(function (k) {
+      return Promise.all([hmacHex(k, 'topic:cmd'), hmacHex(k, 'topic:state'), hmacHex(k, 'sign')]);
+    }).then(function (h) {
+      return hmacKey(hexBytes(h[2])).then(function (signKey) {
+        return { cmdTopic: 'tvr' + h[0].slice(0, 29), stateTopic: 'tvr' + h[1].slice(0, 29), signKey: signKey };
       });
     });
   }
 
+  function RelayTransport(secret, server) {
+    var self = this, keys = null, pending = {}, groups = {};
+    self.mode = 'relay';
+
+    var ready = derive(secret).then(function (d) {
+      keys = d;
+      return new Promise(function (resolve) {
+        var es = new EventSource(server + '/' + d.stateTopic + '/sse');
+        es.onopen = function () { resolve(); };
+        es.onmessage = function (ev) { onEvent(ev.data); };
+        setTimeout(resolve, 5000); // don't wait forever; requests will time out instead
+      });
+    });
+
+    function onEvent(data) {
+      var m, w;
+      try { m = JSON.parse(data); w = JSON.parse(m.message); } catch (e) { return; }
+      if (m.event && m.event !== 'message') return;
+      var g = groups[w.g] || (groups[w.g] = { parts: {}, count: 0 });
+      if (!(w.i in g.parts)) { g.parts[w.i] = w.d; g.count++; }
+      if (g.count < w.n) return;
+      delete groups[w.g];
+      var text = '';
+      for (var i = 0; i < w.n; i++) text += g.parts[i];
+      hmacHex(keys.signKey, text).then(function (sig) {
+        if (sig !== w.s) return; // not from our laptop
+        var msg = JSON.parse(text);
+        if (pending[msg.re]) pending[msg.re].done(msg);
+      });
+    }
+
+    function post(body) {
+      return fetch(server + '/' + keys.cmdTopic, { method: 'POST', body: body }).then(function (r) {
+        if (r.status === 429) throw new Error('Limite diário de mensagens do ntfy.sh atingido. Tente mais tarde.');
+        if (!r.ok) throw new Error('Erro do servidor de mensagens (' + r.status + ')');
+      }, function () { throw new Error('Sem ligação à internet'); });
+    }
+
+    function publish(cmd, args, wait) {
+      return ready.then(function () {
+        var id = randomHex(8);
+        var payload = { id: id, ts: Math.floor(Date.now() / 1000), cmd: cmd, args: args || {} };
+        var reply = null;
+        if (wait) {
+          reply = new Promise(function (resolve, reject) {
+            var timer = setTimeout(function () {
+              delete pending[id];
+              reject(new Error('O portátil não respondeu. Está ligado e com internet?'));
+            }, 15000);
+            pending[id] = {
+              timer: timer,
+              done: function (msg) {
+                clearTimeout(timer);
+                delete pending[id];
+                if (msg.ok) resolve(msg.data);
+                else reject(new Error(msg.error === 'clock' ? 'A hora do telemóvel está errada: acerte o relógio.' : msg.error));
+              }
+            };
+          });
+        }
+        var text = asciiJSON(payload);
+        return hmacHex(keys.signKey, text).then(function (sig) {
+          var gid = randomHex(6), parts = [];
+          for (var i = 0; i < text.length; i += CHUNK) parts.push(text.slice(i, i + CHUNK));
+          return parts.reduce(function (p, part, i) {
+            return p.then(function () {
+              return post(JSON.stringify({ g: gid, i: i, n: parts.length, d: part, s: sig }));
+            });
+          }, Promise.resolve());
+        }).then(function () { return reply; }, function (e) {
+          if (pending[id]) { clearTimeout(pending[id].timer); delete pending[id]; }
+          throw e;
+        });
+      });
+    }
+
+    self.request = function (cmd, args) { return publish(cmd, args, true); };
+    self.send = function (cmd, args) { return publish(cmd, args, false); };
+  }
+
+  function initTransport() {
+    var secret = param('k'), token = param('t'), server = param('s');
+    if (secret) { store(KEYS.secret, secret); store(KEYS.server, server || DEFAULT_RELAY); }
+    if (token) store(KEYS.token, token);
+    secret = secret || store(KEYS.secret);
+    token = token || store(KEYS.token);
+    if (secret && enc && window.crypto && crypto.subtle && window.EventSource) {
+      return new RelayTransport(secret, server || store(KEYS.server) || DEFAULT_RELAY);
+    }
+    if (token && location.protocol === 'http:') return new LocalTransport(token);
+    return null;
+  }
+
+  // ------------------------------------------------------------------ UI helpers
   var toastTimer;
   function toast(msg, isError) {
     var t = $('toast');
     t.textContent = msg;
     t.className = 'toast show' + (isError ? ' error' : '');
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(function () { t.className = 'toast'; }, isError ? 4000 : 1800);
+    toastTimer = setTimeout(function () { t.className = 'toast'; }, isError ? 4500 : 1800);
   }
-  function fail(err) { toast(err.message || 'Sem ligação ao portátil', true); }
+  function setStatus(kind, text) {
+    var s = $('status');
+    s.className = 'status ' + kind;
+    s.textContent = text;
+  }
+  function fail(err) {
+    if (transport && transport.mode === 'relay') setStatus('bad', 'sem resposta');
+    toast(err.message || 'Sem ligação ao portátil', true);
+  }
+  function ok() { if (transport && transport.mode === 'relay') setStatus('good', 'ligado'); }
 
-  // ---- grid ----
+  function remember(data) {
+    if (data.channels) channels = data.channels;
+    if ('current' in data) current = data.current;
+    store(KEYS.state, JSON.stringify({ channels: channels, current: current }));
+  }
+
+  // ------------------------------------------------------------------ grid
   var PALETTE = ['#1f5fbf', '#2e7d4f', '#b3541e', '#7b3fa8', '#b02a4a', '#0f7c86',
                  '#8a6d1a', '#4a5bb0', '#6b8e23', '#a23b8f', '#c0392b', '#2c6e8f'];
   function colorFor(index) { return PALETTE[index % PALETTE.length]; }
@@ -59,7 +223,8 @@
   function renderGrid() {
     grid.innerHTML = '';
     if (!channels.length) {
-      grid.innerHTML = '<div class="empty">Sem canais. Toque em Editar para adicionar.</div>';
+      grid.innerHTML = '<div class="empty">' + (transport ? 'Sem canais. Toque em Editar para adicionar.'
+        : 'Leia o QR code mostrado no portátil (./show-qr.sh) para ligar este telemóvel.') + '</div>';
       return;
     }
     channels.forEach(function (ch, i) {
@@ -74,40 +239,41 @@
 
   function play(ch, el) {
     el.className += ' busy';
-    api('POST', '/api/play', { id: ch.id }).then(function (res) {
-      current = res.current;
-      renderGrid();
+    transport.request('play', { id: ch.id }).then(function (res) {
+      remember(res); ok(); renderGrid();
       toast('▶ ' + ch.name);
     }).catch(function (e) { renderGrid(); fail(e); });
   }
 
   function load() {
-    return api('GET', '/api/channels').then(function (res) {
-      channels = res.channels;
-      current = res.current;
-      renderGrid();
+    if (!transport) { renderGrid(); return; }
+    lastSync = Date.now();
+    if (transport.mode === 'relay') setStatus('wait', 'a ligar…');
+    return transport.request('channels').then(function (res) {
+      remember(res); ok(); renderGrid();
     }).catch(fail);
   }
 
-  // ---- controls ----
+  // ------------------------------------------------------------------ controls
   Array.prototype.forEach.call(document.querySelectorAll('[data-vol]'), function (b) {
     b.onclick = function () {
-      api('POST', '/api/volume', { action: b.getAttribute('data-vol') }).catch(fail);
+      if (transport) transport.send('volume', { action: b.getAttribute('data-vol') }).catch(fail);
     };
   });
 
   $('stopBtn').onclick = function () {
-    api('POST', '/api/stop').then(function () {
-      current = null; renderGrid(); toast('Parado');
+    if (!transport) return;
+    transport.request('stop').then(function (res) {
+      remember(res); ok(); renderGrid(); toast('Parado');
     }).catch(fail);
   };
 
   $('powerBtn').onclick = function () {
-    if (!confirm('Desligar o portátil?')) return;
-    api('POST', '/api/shutdown').then(function () { toast('A desligar…'); }).catch(fail);
+    if (!transport || !confirm('Desligar o portátil?')) return;
+    transport.request('shutdown').then(function () { toast('A desligar…'); }).catch(fail);
   };
 
-  // ---- editor ----
+  // ------------------------------------------------------------------ editor
   function addRow(name, url) {
     var row = document.createElement('div');
     row.className = 'row';
@@ -142,7 +308,7 @@
     }
   }
 
-  $('editBtn').onclick = function () { setEditing(true); };
+  $('editBtn').onclick = function () { if (transport) setEditing(true); };
   $('cancelBtn').onclick = function () { setEditing(false); };
   $('addBtn').onclick = function () { addRow('', 'https://').querySelector('.name').focus(); };
   $('saveBtn').onclick = function () {
@@ -152,19 +318,31 @@
       var url = row.querySelector('.url').value.trim();
       if (name || (url && url !== 'https://')) list.push({ name: name, url: url });
     });
-    api('PUT', '/api/channels', { channels: list }).then(function (res) {
-      channels = res.channels;
-      current = res.current;
+    transport.request('save', { channels: list }).then(function (res) {
+      remember(res); ok();
       setEditing(false);
       renderGrid();
       toast('Guardado');
     }).catch(fail);
   };
 
-  initToken();
+  // ------------------------------------------------------------------ start
+  transport = initTransport();
+  if (transport && transport.mode === 'relay') {
+    // Show the last known channels at once; refresh them from the laptop.
+    try { remember(JSON.parse(store(KEYS.state) || '{}')); } catch (e) {}
+    renderGrid();
+  }
   load();
-  // Refresh when the app comes back to the foreground (e.g. channel changed elsewhere).
+  // Refresh when the app comes back to the foreground (at most once a minute
+  // through the internet: ntfy.sh allows 250 messages a day).
   document.addEventListener('visibilitychange', function () {
-    if (!document.hidden && editor.className.indexOf('hidden') !== -1) load();
+    if (document.hidden || editor.className.indexOf('hidden') === -1) return;
+    if (transport && transport.mode === 'relay' && Date.now() - lastSync < 60000) return;
+    load();
   });
+
+  if ('serviceWorker' in navigator && location.protocol === 'https:') {
+    navigator.serviceWorker.register('sw.js').catch(function () {});
+  }
 })();
