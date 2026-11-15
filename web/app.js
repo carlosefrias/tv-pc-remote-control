@@ -8,12 +8,17 @@
 (function () {
   'use strict';
 
-  var KEYS = { token: 'tvremote.token', secret: 'tvremote.secret', server: 'tvremote.server', state: 'tvremote.state' };
+  var KEYS = { token: 'tvremote.token', secret: 'tvremote.secret', server: 'tvremote.server', state: 'tvremote.state',
+               group: 'tvremote.group' };
   var DEFAULT_RELAY = 'https://ntfy.sh';
+  // Channel groups = languages; one tab each. Swipe left/right to change.
+  var GROUP_ORDER = ['PT', 'EN', 'DE'];
+  var GROUP_NAMES = { PT: 'Português', EN: 'English', DE: 'Deutsch' };
   var transport = null;
   var channels = [];
   var current = null;
   var lastSync = 0;
+  var activeGroup = null;
 
   var $ = function (id) { return document.getElementById(id); };
   var grid = $('grid'), editor = $('editor'), rows = $('rows'), controls = $('controls');
@@ -220,14 +225,42 @@
                  '#8a6d1a', '#4a5bb0', '#6b8e23', '#a23b8f', '#c0392b', '#2c6e8f'];
   function colorFor(index) { return PALETTE[index % PALETTE.length]; }
 
+  function groupOf(ch) { return ch.group || 'PT'; }
+
+  // Known languages always get a tab (even if empty, so channels can be added
+  // there); other groups from the file follow in order of appearance.
+  function groups() {
+    var list = GROUP_ORDER.slice();
+    channels.forEach(function (ch) { if (list.indexOf(groupOf(ch)) === -1) list.push(groupOf(ch)); });
+    return list;
+  }
+
+  function inGroup(g) { return channels.filter(function (ch) { return groupOf(ch) === g; }); }
+
+  function renderTabs() {
+    var tabs = $('tabs');
+    tabs.innerHTML = '';
+    if (!transport) { tabs.className = 'tabs hidden'; return; }
+    tabs.className = 'tabs';
+    groups().forEach(function (g) {
+      var b = document.createElement('button');
+      b.className = g === activeGroup ? 'active' : '';
+      b.setAttribute('role', 'tab');
+      b.innerHTML = (GROUP_NAMES[g] || g) + '<span class="count">' + inGroup(g).length + '</span>';
+      b.onclick = function () { showGroup(g); };
+      tabs.appendChild(b);
+    });
+  }
+
   function renderGrid() {
     grid.innerHTML = '';
-    if (!channels.length) {
-      grid.innerHTML = '<div class="empty">' + (transport ? 'Sem canais. Toque em Editar para adicionar.'
-        : 'Leia o QR code mostrado no portátil (./show-qr.sh) para ligar este telemóvel.') + '</div>';
+    var list = inGroup(activeGroup);
+    if (!list.length) {
+      grid.innerHTML = '<div class="empty">' + (transport ? 'Sem canais em ' + (GROUP_NAMES[activeGroup] || activeGroup) +
+        '. Toque em Editar para adicionar.' : 'Leia o QR code mostrado no portátil (./show-qr.sh) para ligar este telemóvel.') + '</div>';
       return;
     }
-    channels.forEach(function (ch, i) {
+    list.forEach(function (ch, i) {
       var b = document.createElement('button');
       b.className = 'tile' + (ch.id === current ? ' current' : '');
       b.style.background = colorFor(i);
@@ -236,6 +269,44 @@
       grid.appendChild(b);
     });
   }
+
+  function render() {
+    if (groups().indexOf(activeGroup) === -1) activeGroup = 'PT';
+    renderTabs();
+    renderGrid();
+  }
+
+  // Change language tab; `dir` > 0 slides the new grid in from the right.
+  function showGroup(g, dir) {
+    if (g === activeGroup) return;
+    var all = groups();
+    if (dir === undefined) dir = all.indexOf(g) - all.indexOf(activeGroup);
+    activeGroup = g;
+    store(KEYS.group, g);
+    render();
+    grid.className = 'grid ' + (dir > 0 ? 'from-right' : 'from-left');
+    setTimeout(function () { grid.className = 'grid'; }, 260);
+  }
+
+  function step(delta) {
+    var all = groups(), i = all.indexOf(activeGroup) + delta;
+    if (i >= 0 && i < all.length) showGroup(all[i], delta);
+  }
+
+  // Swipe left/right anywhere on the channel area to change language.
+  (function () {
+    var x0 = null, y0 = 0, t0 = 0;
+    $('pager').addEventListener('touchstart', function (e) {
+      if (editor.className.indexOf('hidden') === -1 || e.touches.length !== 1) { x0 = null; return; }
+      x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; t0 = Date.now();
+    }, { passive: true });
+    $('pager').addEventListener('touchend', function (e) {
+      if (x0 === null) return;
+      var dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0;
+      x0 = null;
+      if (Math.abs(dx) > 50 && Math.abs(dx) > 1.5 * Math.abs(dy) && Date.now() - t0 < 800) step(dx < 0 ? 1 : -1);
+    }, { passive: true });
+  })();
 
   function play(ch, el) {
     el.className += ' busy';
@@ -246,11 +317,11 @@
   }
 
   function load() {
-    if (!transport) { renderGrid(); return; }
+    if (!transport) { render(); return; }
     lastSync = Date.now();
     if (transport.mode === 'relay') setStatus('wait', 'a ligar…');
     return transport.request('channels').then(function (res) {
-      remember(res); ok(); renderGrid();
+      remember(res); ok(); render();
     }).catch(fail);
   }
 
@@ -299,12 +370,14 @@
     editor.className = 'editor' + (on ? '' : ' hidden');
     grid.className = 'grid' + (on ? ' hidden' : '');
     controls.className = on ? 'hidden' : '';
+    $('tabs').className = on ? 'tabs hidden' : 'tabs';
     $('editBtn').className = on ? 'ghost hidden' : 'ghost';
     $('toast').className = 'toast';
     window.scrollTo(0, 0);
-    if (on) {
+    if (on) {  // edit the channels of the open language tab only
+      $('editGroup').textContent = GROUP_NAMES[activeGroup] || activeGroup;
       rows.innerHTML = '';
-      channels.forEach(function (ch) { addRow(ch.name, ch.url); });
+      inGroup(activeGroup).forEach(function (ch) { addRow(ch.name, ch.url); });
     }
   }
 
@@ -312,26 +385,30 @@
   $('cancelBtn').onclick = function () { setEditing(false); };
   $('addBtn').onclick = function () { addRow('', 'https://').querySelector('.name').focus(); };
   $('saveBtn').onclick = function () {
-    var list = [];
+    // The other languages are sent back unchanged; this tab's rows replace its channels.
+    var list = channels.filter(function (ch) { return groupOf(ch) !== activeGroup; }).map(function (ch) {
+      return { name: ch.name, url: ch.url, group: groupOf(ch) };
+    });
     Array.prototype.forEach.call(rows.children, function (row) {
       var name = row.querySelector('.name').value.trim();
       var url = row.querySelector('.url').value.trim();
-      if (name || (url && url !== 'https://')) list.push({ name: name, url: url });
+      if (name || (url && url !== 'https://')) list.push({ name: name, url: url, group: activeGroup });
     });
     transport.request('save', { channels: list }).then(function (res) {
       remember(res); ok();
       setEditing(false);
-      renderGrid();
+      render();
       toast('Guardado');
     }).catch(fail);
   };
 
   // ------------------------------------------------------------------ start
   transport = initTransport();
+  activeGroup = store(KEYS.group) || 'PT';
   if (transport && transport.mode === 'relay') {
     // Show the last known channels at once; refresh them from the laptop.
     try { remember(JSON.parse(store(KEYS.state) || '{}')); } catch (e) {}
-    renderGrid();
+    render();
   }
   load();
   // Refresh when the app comes back to the foreground (at most once a minute

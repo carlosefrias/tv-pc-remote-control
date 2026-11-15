@@ -50,10 +50,12 @@ var res = { url: location.href, video: !!main, fullscreen: !!fsEl, playing: fals
 if (!main) {
   // No <video> in this document: the player may live inside an iframe (e.g. a
   // Dailymotion/YouTube embed). Prefer a frame from a video host, else the biggest.
+  // Never pick a cookie-consent / privacy frame (it can be the biggest frame).
+  var NOT_PLAYER = /consent|cmp\.|\/cmp|privacy|sourcepoint|sp-prod|didomi|onetrust|cookiebot|usercentrics|trustarc|quantcast|cookie|imasdk|doubleclick|googlesyndication|adservice|safeframe/i;
   var frame = null, frameScore = 0;
   Array.prototype.forEach.call(document.querySelectorAll('iframe'), function (f) {
     var a = area(f);
-    if (!a) return;
+    if (!a || NOT_PLAYER.test((f.src || '') + ' ' + (f.id || '') + ' ' + (f.title || ''))) return;
     var score = a * (PLAYER_HOSTS.test(f.src || '') ? 4 : 1);
     if (score > frameScore) { frameScore = score; frame = f; }
   });

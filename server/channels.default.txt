@@ -1,10 +1,12 @@
-# TV Remote channel list - one channel per line:
-#   Name | URL
-# Lines starting with # are ignored. Order here = order on the phone grid.
+# TV Remote channel list.
+#   [PT] / [EN] / [DE] start a language group (one tab per group on the phone).
+#   Each channel:  Name | URL
+# Lines starting with # are ignored. Order here = order on the phone.
 # You can edit this file by hand or from the phone app (Edit mode).
 # Note: editing from the phone rewrites this file (comments other than this
 # header are not kept).
 
+[PT]
 RTP 1 | https://www.rtp.pt/play/direto/rtp1
 RTP 2 | https://www.rtp.pt/play/direto/rtp2
 RTP Notícias | https://www.rtp.pt/play/direto/rtp3
@@ -17,4 +19,28 @@ ARTV Parlamento | https://canal.parlamento.pt/
 RTP Madeira | https://www.rtp.pt/play/direto/rtpmadeira
 RTP Açores | https://www.rtp.pt/play/direto/rtpacores
 Euronews | https://pt.euronews.com/live
+
+[EN]
 Sky News | https://news.sky.com/watch-live
+Al Jazeera English | https://www.aljazeera.com/live
+CNA | https://www.channelnewsasia.com/watch
+NHK World | https://www3.nhk.or.jp/nhkworld/en/live/
+ABC News Live | https://abcnews.go.com/Live
+CBS News 24/7 | https://www.cbsnews.com/live/
+NBC News NOW | https://www.nbcnews.com/now
+GB News | https://www.gbnews.com/watch/live
+TRT World | https://www.trtworld.com/live
+Euronews | https://www.euronews.com/live
+CNN Headlines | https://pluto.tv/gb_ie/watch/live-tv/31433/
+Pluto TV Kids | https://pluto.tv/gb_ie/watch/live-tv/30257/
+Pokémon | https://pluto.tv/gb_ie/watch/live-tv/30463/
+Teletubbies | https://pluto.tv/gb_ie/watch/live-tv/29529/
+Retro Toons | https://pluto.tv/gb_ie/watch/live-tv/29217/
+
+[DE]
+Das Erste | https://www.ardmediathek.de/live/Y3JpZDovL2Rhc2Vyc3RlLmRlL2xpdmUvY2xpcC9hYmNhMDdhMy0zNDc2LTQ4NTEtYjE2Mi1mZGU4ZjY0NmQ0YzQ
+tagesschau24 | https://www.ardmediathek.de/live/Y3JpZDovL2Rhc2Vyc3RlLmRlL3RhZ2Vzc2NoYXUvbGl2ZXN0cmVhbQ
+BR Fernsehen | https://www.ardmediathek.de/live/Y3JpZDovL2JyLmRlL0xpdmVzdHJlYW0tQlItU8O8ZA
+NDR Fernsehen | https://www.ardmediathek.de/live/Y3JpZDovL25kci5kZS9MaXZlc3RyZWFtLU5EUi1OaWVkZXJzYWNoc2Vu
+hr-fernsehen | https://www.ardmediathek.de/live/Y3JpZDovL2hyLmRlL0xpdmVzdHJlYW0tSFI
+Euronews | https://de.euronews.com/live

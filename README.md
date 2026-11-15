@@ -51,12 +51,13 @@ The QR code contains a secret key (after `#k=`), which the phone remembers. **Ke
 
 | On the phone | What happens on the TV |
 |---|---|
+| Swipe left / right (or tap a tab) | Switches between the language tabs: **Português · English · Deutsch**. The app remembers the last one. |
 | Tap a channel | Firefox closes and reopens on that channel, with the video player full screen and sound on. The tile is marked **● AO VIVO**. |
 | 🔉 / 🔊 | Volume down / up |
 | 🔇 | Mute / unmute |
 | ⏹ | Stops: closes Firefox |
 | ⏻ | Shuts down the laptop (asks for confirmation first) |
-| **Editar** | Add, rename, reorder (↑ ↓) or delete channels, then **Guardar** |
+| **Editar** | Add, rename, reorder (↑ ↓) or delete the channels **of the open language tab**, then **Guardar** |
 
 ### If it doesn't work
 
@@ -76,13 +77,20 @@ The QR code contains a secret key (after `#k=`), which the phone remembers. **Ke
 You can edit the channels from the phone (**Editar** button), or by hand in `~/.config/tv-remote/channels.txt`:
 
 ```
+[PT]
 RTP 1 | https://www.rtp.pt/play/direto/rtp1
 CNN Portugal | https://cnnportugal.iol.pt/direto
+
+[EN]
+Sky News | https://news.sky.com/watch-live
+
+[DE]
+tagesschau24 | https://www.tagesschau.de/multimedia/livestreams/livestream1
 ```
 
-Each line is `Name | URL`, and the file order is the grid order. Changes are picked up right away, with no restart needed.
+Channels are grouped by language. A line `[PT]`, `[EN]` or `[DE]` starts a group, and each group is a tab on the phone (**Português · English · Deutsch**). Other group names also work and get their own tab. Each channel line is `Name | URL`, and the order in the file is the order on the phone. Changes are picked up right away, with no restart needed.
 
-When new channels are added to the default list ([`server/channels.default.txt`](server/channels.default.txt)), `./install.sh` adds them to your list automatically, so after a `git pull`, just run `./install.sh`. It only adds new channels, at the end. Your own channels, names and order stay as they are.
+When new channels are added to the default list ([`server/channels.default.txt`](server/channels.default.txt)), `./install.sh` adds them to your list automatically, so after a `git pull`, just run `./install.sh`. It only adds new channels, at the end of their language group. Your own channels, names and order stay as they are. Lists from older versions, without groups, are organised by language automatically: channels from the default list go to their language, and your own channels go to `[PT]`.
 
 A default channel you deleted is **not** added back. The defaults already offered are remembered in `~/.config/tv-remote/channels.seen`. To get every default channel offered again, delete that file and run `./install.sh`. The same update also runs on its own with `./update-channels.sh`.
 
@@ -90,13 +98,30 @@ A default channel you deleted is **not** added back. The defaults already offere
 
 The TV is in **Germany**, so what matters is what the broadcasters allow **outside Portugal**. The home internet is a 4G router with a **UK SIM card** (roaming), so websites see the connection as being in the **UK**, not Germany. German services such as Joyn treat it as "abroad" too. All of these are official, free live streams that work from abroad. Each was tested from the TV's home network, in Firefox with the full-screen helper:
 
+**Português**
+
 | Channel | Page |
 |---|---|
 | RTP 1, RTP 2, RTP Notícias, RTP Memória, RTP Mundo, RTP África, RTP Madeira, RTP Açores, RTP Desporto 1 | `rtp.pt/play/direto/…` |
 | CNN Portugal | `cnnportugal.iol.pt/direto` |
 | ARTV Parlamento | `canal.parlamento.pt` |
 | Euronews (Portuguese) | `pt.euronews.com/live` |
-| Sky News (English) | `news.sky.com/watch-live` |
+
+**English**: all free, with no login, and all playing full screen in tests within 8–18 s:
+
+| Channel | Page |
+|---|---|
+| Sky News, Al Jazeera English, CNA, NHK World, ABC News Live, CBS News 24/7, NBC News NOW, GB News, TRT World, Euronews | each broadcaster's own live page |
+| CNN Headlines, Pluto TV Kids, Pokémon, Teletubbies, Retro Toons | [Pluto TV](https://pluto.tv) (free, ad-supported, UK/Ireland line-up) |
+
+**Deutsch**: all free, with no login:
+
+| Channel | Page |
+|---|---|
+| Das Erste, tagesschau24, BR Fernsehen, NDR Fernsehen, hr-fernsehen | ARD Mediathek (`ardmediathek.de/live/…`) |
+| Euronews (German) | `de.euronews.com/live` |
+
+The Pluto TV channels are the UK/Ireland line-up, because the connection appears to be in the UK. With a German SIM card, Pluto TV would switch to its German line-up and these links might stop working.
 
 **Euronews, first time only:** the site shows a cookie notice before it loads the video. On the TV, click **"Continuar sem aceitar"** (or "Aceitar e fechar") once with the laptop's mouse. The choice is kept in the TV's Firefox profile.
 
@@ -110,6 +135,10 @@ Not included for now (checked in November 2026):
 | SIC Notícias | Most likely geo-blocked outside Portugal: the stream's playlist loads, but no video ever arrives. Abroad, SIC channels are offered through OPTO. |
 | CMTV, NOW | No live stream on their websites (`cmjornal.pt/cmtv`, `nowcanal.pt` only have articles and clips). The live channels are only on the TV operators (MEO, NOS…). |
 | Porto Canal | The site blocks automated browsers (Cloudflare). |
+| France 24 (EN), ZDF, WELT | Stopped at the cookie notice: the video only loads after it is answered. They should work after one click on the TV (as with Euronews), but this wasn't tested. |
+| arte, MDR, KiKA | "Nicht verfügbar" / no player: only for Germany. They would probably work with a German SIM card. |
+| DW English, phoenix, ntv | The player goes full screen, but the stream never starts in the automated Firefox. |
+| Eurosport | No free stream from the UK (TNT Sports, paid). In Germany, Eurosport 1 is free on Joyn, but that needs a German connection. |
 
 Sites such as cxtv re-stream channels without the broadcasters' permission, so they are not used here.
 

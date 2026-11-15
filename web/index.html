@@ -20,11 +20,13 @@
     <button id="editBtn" class="ghost">Editar</button>
   </header>
 
-  <main>
+  <nav id="tabs" class="tabs" role="tablist"></nav>
+
+  <main id="pager">
     <div id="grid" class="grid"></div>
 
     <div id="editor" class="editor hidden">
-      <p class="hint">Nome e link de cada canal. Use ↑ ↓ para ordenar.</p>
+      <p class="hint">Canais em <b id="editGroup"></b>. Nome e link de cada canal; use ↑ ↓ para ordenar.</p>
       <div id="rows"></div>
       <button id="addBtn" class="wide">+ Adicionar canal</button>
       <div class="editor-actions">

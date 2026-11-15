@@ -19,6 +19,7 @@ from http import HTTPStatus
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
+import channels
 import display
 import fullscreen
 import relay
@@ -55,15 +56,6 @@ DEFAULT_CONFIG = {
     "relay_secret": "",  # generated on first run; travels only inside the QR code
     "app_url": "https://carlosefrias.github.io/tv-pc-remote-control/",
 }
-
-CHANNELS_HEADER = """\
-# TV Remote channel list - one channel per line:
-#   Name | URL
-# Lines starting with # are ignored. Order here = order on the phone grid.
-# You can edit this file by hand or from the phone app (Edit mode).
-# Note: editing from the phone rewrites this file (comments other than this
-# header are not kept).
-"""
 
 FIREFOX_PREFS = {
     "browser.sessionstore.resume_from_crash": False,
@@ -127,33 +119,26 @@ def load_config():
 # --------------------------------------------------------------------------- channels
 
 def read_channels():
+    """[{id, name, url, group}] - id is the position in the file."""
     if not CHANNELS_FILE.exists():
-        shutil.copyfile(DEFAULT_CHANNELS_FILE, CHANNELS_FILE)
-    channels = []
-    for raw in CHANNELS_FILE.read_text(encoding="utf-8").splitlines():
-        line = raw.strip()
-        if not line or line.startswith("#") or "|" not in line:
-            continue
-        name, url = (p.strip() for p in line.split("|", 1))
-        if name and url:
-            channels.append({"id": len(channels), "name": name, "url": url})
-    return channels
+        channels.write(str(CHANNELS_FILE), channels.parse(str(DEFAULT_CHANNELS_FILE))[0])
+    items, _ = channels.parse(str(CHANNELS_FILE))
+    for i, c in enumerate(items):
+        c["id"] = i
+    return items
 
 
 def write_channels(items):
     clean = []
     for it in items:
-        name = str(it.get("name", "")).replace("|", "/").replace("\n", " ").strip()
+        name = str(it.get("name", "")).replace("|", "/").replace("\n", " ").strip().lstrip("#[").strip()
         url = str(it.get("url", "")).replace("\n", "").strip()
         if not name or not url:
             raise ValueError("Every channel needs a name and a URL")
         if not url.startswith(("http://", "https://")):
             raise ValueError("URL must start with http:// or https://: %s" % url)
-        clean.append((name, url))
-    body = CHANNELS_HEADER + "\n" + "".join("%s | %s\n" % c for c in clean)
-    tmp = CHANNELS_FILE.with_suffix(".tmp")
-    tmp.write_text(body, encoding="utf-8")
-    tmp.replace(CHANNELS_FILE)
+        clean.append({"name": name, "url": url, "group": channels.clean_group(it.get("group"))})
+    channels.write(str(CHANNELS_FILE), clean)
 
 
 # --------------------------------------------------------------------------- actions
@@ -296,11 +281,11 @@ def api_call(cfg, cmd, args):
         state["current"] = None
         return {"channels": read_channels(), "current": None}
     if cmd == "play":
-        channels = read_channels()
+        chans = read_channels()
         cid = int(args.get("id", -1))
-        if not 0 <= cid < len(channels):
+        if not 0 <= cid < len(chans):
             raise NotFound("no such channel")
-        play(cfg, channels[cid])
+        play(cfg, chans[cid])
     elif cmd == "stop":
         stop()
     elif cmd == "volume":
