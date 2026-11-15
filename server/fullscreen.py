@@ -16,6 +16,14 @@ from pathlib import Path
 import display
 
 ASSIST_JS = (Path(__file__).resolve().parent / "player_assist.js").read_text(encoding="utf-8")
+CONSENT_JS = (Path(__file__).resolve().parent / "consent_reject.js").read_text(encoding="utf-8")
+CONSENT_FRAMES_JS = r"""
+return [...document.querySelectorAll('iframe')].filter(function (f) {
+  var r = f.getBoundingClientRect();
+  return r.width > 50 && r.height > 50 && /consent|cmp|privacy|sourcepoint|sp_message|didomi|onetrust|usercentrics|cookie|trustarc|quantcast/i
+    .test((f.src || '') + ' ' + (f.id || '') + ' ' + (f.name || '') + ' ' + (f.title || ''));
+});
+"""
 
 # Prefs written to the dedicated profile so the assist can work.
 PREFS = {
@@ -168,6 +176,40 @@ def run_in_frame(m, ref, elapsed, clicks, depth=0):
             pass
 
 
+def click_element(m, ref):
+    """A real (trusted) click through Marionette; falls back to a JS click."""
+    try:
+        m.send("WebDriver:ElementClick", {"id": ref.get(ELEMENT_KEY)})
+    except MarionetteError:
+        m.execute("arguments[0].click()", [ref])
+
+
+def reject_cookies(m):
+    """Answer a cookie notice with its REFUSING option (consent_reject.js never
+    picks an accepting one). Looks in the page and in consent iframes.
+    Returns the label of the clicked button, or None."""
+    try:
+        found = m.execute(CONSENT_JS)
+        if found and found.get("el"):
+            click_element(m, found["el"])
+            return found.get("label")
+        for frame in m.execute(CONSENT_FRAMES_JS) or []:
+            try:
+                switch_to_frame(m, frame)
+                found = m.execute(CONSENT_JS)
+                if found and found.get("el"):
+                    click_element(m, found["el"])
+                    return "%s (in frame)" % found.get("label")
+            finally:
+                try:
+                    m.send("WebDriver:SwitchToParentFrame")
+                except MarionetteError:
+                    pass
+    except MarionetteError:
+        pass
+    return None
+
+
 def connect(port, keep_going, timeout=15.0):
     """Wait for Firefox to open the Marionette port."""
     deadline = time.time() + timeout
@@ -179,7 +221,7 @@ def connect(port, keep_going, timeout=15.0):
     return None
 
 
-def assist(port, keep_going, url, tv=None, fast_secs=60, on_status=None):
+def assist(port, keep_going, url, tv=None, fast_secs=60, on_status=None, refuse_cookies=True):
     """Open `url` in the Firefox listening on `port` (started on about:blank) and
     keep its player fullscreen/playing until keep_going() turns False or Firefox exits.
     If `tv` (a monitor from display.find_tv) is given, the window is moved there first.
@@ -206,8 +248,16 @@ def assist(port, keep_going, url, tv=None, fast_secs=60, on_status=None):
             return False
         start, last = time.time(), None
         clicks = [0]  # shared with run_in_frame
+        consent_clicks = 0
         while keep_going():
             elapsed = time.time() - start
+            # Cookie notices block many players until answered: refuse them
+            # (up to 3 clicks, for notices with a second step) in the first 45 s.
+            if refuse_cookies and consent_clicks < 3 and elapsed < 45:
+                clicked = reject_cookies(m)
+                if clicked:
+                    consent_clicks += 1
+                    log("cookie notice: clicked %r (refuse)" % clicked)
             try:
                 res = m.execute(ASSIST_JS, [{"elapsed": elapsed, "clicks": clicks[0]}]) or {}
             except MarionetteError as e:  # page navigating/reloading: try again

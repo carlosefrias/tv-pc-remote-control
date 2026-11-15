@@ -123,7 +123,7 @@ The TV is in **Germany**, so what matters is what the broadcasters allow **outsi
 
 The Pluto TV channels are the UK/Ireland line-up, because the connection appears to be in the UK. With a German SIM card, Pluto TV would switch to its German line-up and these links might stop working.
 
-**Euronews, first time only:** the site shows a cookie notice before it loads the video. On the TV, click **"Continuar sem aceitar"** (or "Aceitar e fechar") once with the laptop's mouse. The choice is kept in the TV's Firefox profile.
+**Cookie notices:** many sites (Euronews, Sky News…) only load the video after their cookie notice is answered. The TV answers them automatically with the option that **refuses** cookies, such as "Continuar sem aceitar", "Reject all" or "Ablehnen". It never clicks an "accept" button. See [How the player goes full screen](#how-the-player-goes-full-screen).
 
 RTP Desporto 1 only has pictures while an event is on. On the RTP channels, some programmes (for example football matches and some films) are not shown outside Portugal for rights reasons. RTP shows a notice instead while they are on.
 
@@ -135,7 +135,9 @@ Not included for now (checked in November 2026):
 | SIC Notícias | Most likely geo-blocked outside Portugal: the stream's playlist loads, but no video ever arrives. Abroad, SIC channels are offered through OPTO. |
 | CMTV, NOW | No live stream on their websites (`cmjornal.pt/cmtv`, `nowcanal.pt` only have articles and clips). The live channels are only on the TV operators (MEO, NOS…). |
 | Porto Canal | The site blocks automated browsers (Cloudflare). |
-| France 24 (EN), ZDF, WELT | Stopped at the cookie notice: the video only loads after it is answered. They should work after one click on the TV (as with Euronews), but this wasn't tested. |
+| France 24 (EN) | Its site only shows the live stream (a YouTube embed) to visitors who **accept** cookies. On France 24's YouTube channel, the ads before the live stream took over a minute, and the video then paused, so it isn't reliable. |
+| ZDF | After the cookie notice is refused, the player still never starts in the automated Firefox. |
+| WELT | The cookie notice is "accept tracking or pay" (WELT Pur). There is no free option that refuses tracking. |
 | arte, MDR, KiKA | "Nicht verfügbar" / no player: only for Germany. They would probably work with a German SIM card. |
 | DW English, phoenix, ntv | The player goes full screen, but the stream never starts in the automated Firefox. |
 | Eurosport | No free stream from the UK (TNT Sports, paid). In Germany, Eurosport 1 is free on Joyn, but that needs a German connection. |
@@ -187,6 +189,7 @@ Firefox only lets a page go full screen after a real click, so the server contro
    - finds the biggest video on the page and puts its player into real full screen, which also hides the site's pop-ups;
    - unmutes the video, because many sites start muted;
    - starts the video if it is waiting for a click. It tries `play()` first, then one real click on the player. It never clicks while an ad is playing.
+   - answers cookie notices with their **refusing** option, during the first 45 s. [`server/consent_reject.js`](server/consent_reject.js) looks for labels such as "Reject all", "Ablehnen", "Continuar sem aceitar" or "Nur notwendige", in the page, in consent frames (Sourcepoint…) and in shadow DOM (Usercentrics…). Anything that accepts, or that opens settings, is never clicked. Every click is logged as `cookie notice: clicked '…' (refuse)`. To turn this off, set `auto_reject_cookies` to `false`.
    - handles players inside a frame (an embedded Dailymotion, YouTube or similar player, as Euronews uses). The frame goes full screen from the page, and the server enters the frame through Marionette (which works even across sites) and runs the same script there: play, unmute, click if needed. Nested frames work up to 3 levels deep.
 3. The server keeps checking (every 5 s after the first minute), so if anything takes the player out of full screen, it goes back.
 
@@ -206,6 +209,7 @@ It was tested in Firefox 149: RTP 1, RTP 2 and RTP Notícias go full screen and 
 | `fullscreen_player` | `true` | puts only the video player in full screen (needs `dedicated_profile`) |
 | `marionette_port` | `2828` | local port used to control Firefox |
 | `tv_display` | `auto` | screen that shows the channel: `auto` (the external TV), an output name such as `HDMI-1`, or `none` |
+| `auto_reject_cookies` | `true` | answer cookie notices on channel pages with the option that refuses cookies (never accept) |
 | `relay` | `true` | control through the internet via ntfy (see above) |
 | `relay_server` | `https://ntfy.sh` | ntfy server to use (could be self-hosted) |
 | `relay_secret` | random | key shared with the phone through the QR code; delete it to revoke all phones |

@@ -47,6 +47,9 @@ DEFAULT_CONFIG = {
     # Which screen shows the channel: "auto" = the TV (external HDMI/DP screen),
     # an xrandr output name such as "HDMI-1", or "none" to leave Firefox where it opens.
     "tv_display": "auto",
+    # Answer cookie notices on the channel pages with their REFUSE option
+    # ("Reject all", "Ablehnen", "Continuar sem aceitar"...), never "accept".
+    "auto_reject_cookies": True,
     "shutdown_cmd": ["systemctl", "poweroff"],
     "volume_step": "5%",
     # Control through the internet (for Wi-Fi with "AP isolation" / 4G routers):
@@ -206,7 +209,7 @@ def start_fullscreen_helper(cfg, gen, url, tv):
 
     def run():
         port = int(cfg.get("marionette_port", 2828))
-        if fullscreen.assist(port, keep_going, url, tv=tv):
+        if fullscreen.assist(port, keep_going, url, tv=tv, refuse_cookies=cfg.get("auto_reject_cookies", True)):
             return
         # Couldn't control Firefox: at least show the page (whole page, kiosk).
         with lock:
