@@ -113,13 +113,20 @@ The TV is in **Germany**, so what matters is what the broadcasters allow **outsi
 |---|---|
 | Sky News, Al Jazeera English, CNA, NHK World, ABC News Live, CBS News 24/7, NBC News NOW, GB News, TRT World, Euronews | each broadcaster's own live page |
 | CNN Headlines, Pluto TV Kids, Pokémon, Teletubbies, Retro Toons | [Pluto TV](https://pluto.tv) (free, ad-supported, UK/Ireland line-up) |
+| **Movies:** Pluto TV Movies, Action, Thrillers, Sci-Fi, Comedy Movies, Westerns, Family Movie Club, British Screen Classics, Curzon (arthouse) | Pluto TV |
+| **Series:** Pluto TV Drama, Crime Drama, CSI, Sherlock, Classic TV, Sci-fi Series, Sitcoms, Crime (true crime) | Pluto TV |
+| **Documentaries:** Pluto TV History, Science, Space, Animals, 5 Exploring Britain, Britain at War | Pluto TV |
 
 **Deutsch**: all free, with no login:
 
 | Channel | Page |
 |---|---|
-| Das Erste, tagesschau24, BR Fernsehen, NDR Fernsehen, hr-fernsehen | ARD Mediathek (`ardmediathek.de/live/…`) |
+| Das Erste, tagesschau24, BR Fernsehen, NDR Fernsehen, hr-fernsehen, WDR Fernsehen, ARD alpha (documentaries, education) | ARD Mediathek (`ardmediathek.de/live/…`) |
 | Euronews (German) | `de.euronews.com/live` |
+
+The Pluto TV channels play full screen within about 10–20 s, and show ad breaks like normal TV. Pluto TV's movies, series and documentaries are all in English; there is no free Portuguese movie or series channel that works from abroad (RTP Memória, already in the list, shows older Portuguese series and films).
+
+On ARD alpha, like on RTP, some programmes are not shown in the live stream for rights reasons, and a notice is shown instead while they are on.
 
 The Pluto TV channels are the UK/Ireland line-up, because the connection appears to be in the UK. With a German SIM card, Pluto TV would switch to its German line-up and these links might stop working.
 
@@ -138,7 +145,7 @@ Not included for now (checked in November 2026):
 | France 24 (EN) | Its site only shows the live stream (a YouTube embed) to visitors who **accept** cookies. On France 24's YouTube channel, the ads before the live stream took over a minute, and the video then paused, so it isn't reliable. |
 | ZDF | After the cookie notice is refused, the player still never starts in the automated Firefox. |
 | WELT | The cookie notice is "accept tracking or pay" (WELT Pur). There is no free option that refuses tracking. |
-| arte, MDR, KiKA | "Nicht verfügbar" / no player: only for Germany. They would probably work with a German SIM card. |
+| arte, MDR, KiKA, ONE, 3sat, SWR, SR, rbb, Radio Bremen | "Nicht verfügbar" / "Wiedergabefehler" ("in Ihrer Region nicht verfügbar"): only for Germany. They would probably work with a German SIM card. ONE and 3sat would add films and series. |
 | DW English, phoenix, ntv | The player goes full screen, but the stream never starts in the automated Firefox. |
 | Eurosport | No free stream from the UK (TNT Sports, paid). In Germany, Eurosport 1 is free on Joyn, but that needs a German connection. |
 

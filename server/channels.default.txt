@@ -36,6 +36,29 @@ Pluto TV Kids | https://pluto.tv/gb_ie/watch/live-tv/30257/
 Pokémon | https://pluto.tv/gb_ie/watch/live-tv/30463/
 Teletubbies | https://pluto.tv/gb_ie/watch/live-tv/29529/
 Retro Toons | https://pluto.tv/gb_ie/watch/live-tv/29217/
+Pluto TV Movies | https://pluto.tv/gb_ie/watch/live-tv/31182/
+Pluto TV Action | https://pluto.tv/gb_ie/watch/live-tv/29318/
+Pluto TV Thrillers | https://pluto.tv/gb_ie/watch/live-tv/29324/
+Pluto TV Sci-Fi | https://pluto.tv/gb_ie/watch/live-tv/28661/
+Pluto TV Comedy Movies | https://pluto.tv/gb_ie/watch/live-tv/29328/
+Pluto TV Westerns | https://pluto.tv/gb_ie/watch/live-tv/20563/
+Pluto TV Family Movie Club | https://pluto.tv/gb_ie/watch/live-tv/29655/
+British Screen Classics | https://pluto.tv/gb_ie/watch/live-tv/28942/
+Curzon | https://pluto.tv/gb_ie/watch/live-tv/28699/
+Pluto TV Drama | https://pluto.tv/gb_ie/watch/live-tv/18968/
+Pluto TV Crime Drama | https://pluto.tv/gb_ie/watch/live-tv/31372/
+CSI | https://pluto.tv/gb_ie/watch/live-tv/19553/
+Pluto TV Sherlock | https://pluto.tv/gb_ie/watch/live-tv/29385/
+Pluto TV Classic TV | https://pluto.tv/gb_ie/watch/live-tv/29152/
+Pluto TV Sci-fi Series | https://pluto.tv/gb_ie/watch/live-tv/19946/
+Pluto TV Sitcoms | https://pluto.tv/gb_ie/watch/live-tv/30742/
+Pluto TV Crime | https://pluto.tv/gb_ie/watch/live-tv/28675/
+Pluto TV History | https://pluto.tv/gb_ie/watch/live-tv/18224/
+Pluto TV Science | https://pluto.tv/gb_ie/watch/live-tv/28988/
+Pluto TV Space | https://pluto.tv/gb_ie/watch/live-tv/30748/
+Pluto TV Animals | https://pluto.tv/gb_ie/watch/live-tv/29878/
+5 Exploring Britain | https://pluto.tv/gb_ie/watch/live-tv/29900/
+Pluto TV Britain at War | https://pluto.tv/gb_ie/watch/live-tv/28678/
 
 [DE]
 Das Erste | https://www.ardmediathek.de/live/Y3JpZDovL2Rhc2Vyc3RlLmRlL2xpdmUvY2xpcC9hYmNhMDdhMy0zNDc2LTQ4NTEtYjE2Mi1mZGU4ZjY0NmQ0YzQ
@@ -44,3 +67,5 @@ BR Fernsehen | https://www.ardmediathek.de/live/Y3JpZDovL2JyLmRlL0xpdmVzdHJlYW0t
 NDR Fernsehen | https://www.ardmediathek.de/live/Y3JpZDovL25kci5kZS9MaXZlc3RyZWFtLU5EUi1OaWVkZXJzYWNoc2Vu
 hr-fernsehen | https://www.ardmediathek.de/live/Y3JpZDovL2hyLmRlL0xpdmVzdHJlYW0tSFI
 Euronews | https://de.euronews.com/live
+WDR Fernsehen | https://www.ardmediathek.de/live/Y3JpZDovL3dkci5kZS9CZWl0cmFnLTNkYTY2NGRlLTE4YzItNDY1MC1hNGZmLTRmNjQxNDcyMDcyYg
+ARD alpha | https://www.ardmediathek.de/live/Y3JpZDovL2JyLmRlL0xpdmVzdHJlYW0tQVJELUFscGhh
