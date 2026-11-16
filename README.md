@@ -106,6 +106,7 @@ The TV is in **Germany**, so what matters is what the broadcasters allow **outsi
 | CNN Portugal | `cnnportugal.iol.pt/direto` |
 | ARTV Parlamento | `canal.parlamento.pt` |
 | Euronews (Portuguese) | `pt.euronews.com/live` |
+| Band (Brazil: news, entertainment, some novelas) | Band's own live player (`beyond.spalla.io/player/?live=…`), the one embedded in `band.com.br/ao-vivo` |
 
 **English**: all free, with no login, and all playing full screen in tests within 8–18 s:
 
@@ -123,6 +124,8 @@ The TV is in **Germany**, so what matters is what the broadcasters allow **outsi
 |---|---|
 | Das Erste, tagesschau24, BR Fernsehen, NDR Fernsehen, hr-fernsehen, WDR Fernsehen, ARD alpha (documentaries, education) | ARD Mediathek (`ardmediathek.de/live/…`) |
 | Euronews (German) | `de.euronews.com/live` |
+
+Band opens its player page directly, not `band.com.br/ao-vivo`, because that site sometimes shows a Cloudflare "Verify you are human" check to the TV's automated Firefox. The player sometimes shows an ad of about 30 s first. If Band changes its player and the channel stops working, the current link is in the page source of `band.com.br/ao-vivo`.
 
 The Pluto TV channels play full screen within about 10–20 s, and show ad breaks like normal TV. Pluto TV's movies, series and documentaries are all in English; there is no free Portuguese movie or series channel that works from abroad (RTP Memória, already in the list, shows older Portuguese series and films).
 
@@ -142,6 +145,9 @@ Not included for now (checked in November 2026):
 | SIC Notícias | Most likely geo-blocked outside Portugal: the stream's playlist loads, but no video ever arrives. Abroad, SIC channels are offered through OPTO. |
 | CMTV, NOW | No live stream on their websites (`cmjornal.pt/cmtv`, `nowcanal.pt` only have articles and clips). The live channels are only on the TV operators (MEO, NOS…). |
 | Porto Canal | The site blocks automated browsers (Cloudflare). |
+| SBT | Its live stream (a YouTube embed) says "The uploader has not made this video available in your country". |
+| RedeTV! | Its live player (Dailymotion) says "This content is no longer available". |
+| Brazilian novela channels (Globoplay Novelas, Viva, Pluto TV Novelas…) | Paid, or only in Brazil. Pluto TV's Brazilian line-up isn't offered from the UK. |
 | France 24 (EN) | Its site only shows the live stream (a YouTube embed) to visitors who **accept** cookies. On France 24's YouTube channel, the ads before the live stream took over a minute, and the video then paused, so it isn't reliable. |
 | ZDF | After the cookie notice is refused, the player still never starts in the automated Firefox. |
 | WELT | The cookie notice is "accept tracking or pay" (WELT Pur). There is no free option that refuses tracking. |

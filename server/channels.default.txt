@@ -19,6 +19,7 @@ ARTV Parlamento | https://canal.parlamento.pt/
 RTP Madeira | https://www.rtp.pt/play/direto/rtpmadeira
 RTP Açores | https://www.rtp.pt/play/direto/rtpacores
 Euronews | https://pt.euronews.com/live
+Band (Brasil) | https://beyond.spalla.io/player/?live=019a797e-eeb8-7eda-9518-132403ccb160
 
 [EN]
 Sky News | https://news.sky.com/watch-live
