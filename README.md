@@ -57,7 +57,7 @@ The QR code contains a secret key (after `#k=`), which the phone remembers. **Ke
 | 🔇 | Mute / unmute |
 | ⏹ | Stops: closes Firefox |
 | ⏻ | Shuts down the laptop (asks for confirmation first) |
-| **Editar** | Add, rename, reorder (↑ ↓) or delete the channels **of the open language tab**, then **Guardar** |
+| **Editar** | Add, rename, reorder (↑ ↓), change the category of, or delete the channels **of the open language tab**, then **Guardar** |
 
 ### If it doesn't work
 
@@ -78,19 +78,19 @@ You can edit the channels from the phone (**Editar** button), or by hand in `~/.
 
 ```
 [PT]
-RTP 1 | https://www.rtp.pt/play/direto/rtp1
-CNN Portugal | https://cnnportugal.iol.pt/direto
+RTP 1 | https://www.rtp.pt/play/direto/rtp1 | Generalistas
+CNN Portugal | https://cnnportugal.iol.pt/direto | Notícias
 
 [EN]
-Sky News | https://news.sky.com/watch-live
+Sky News | https://news.sky.com/watch-live | News
 
 [DE]
-tagesschau24 | https://www.tagesschau.de/multimedia/livestreams/livestream1
+tagesschau24 | https://www.tagesschau.de/multimedia/livestreams/livestream1 | Nachrichten
 ```
 
-Channels are grouped by language. A line `[PT]`, `[EN]` or `[DE]` starts a group, and each group is a tab on the phone (**Português · English · Deutsch**). Other group names also work and get their own tab. Each channel line is `Name | URL`, and the order in the file is the order on the phone. Changes are picked up right away, with no restart needed.
+Channels are grouped by language. A line `[PT]`, `[EN]` or `[DE]` starts a group, and each group is a tab on the phone (**Português · English · Deutsch**). Other group names also work and get their own tab. Each channel line is `Name | URL | Category`. The category is optional. Inside each tab, the phone shows the channels in sections, one per category (for example *Notícias*, *Movies*, *Doku & Bildung*), in the order the categories first appear in the file. Channels without a category go last, under *Outros*. Within a section, the order in the file is the order on the phone. In **Editar**, each channel has a category box: pick an existing category or type a new one. Changes are picked up right away, with no restart needed.
 
-When new channels are added to the default list ([`server/channels.default.txt`](server/channels.default.txt)), `./install.sh` adds them to your list automatically, so after a `git pull`, just run `./install.sh`. It only adds new channels, at the end of their language group. Your own channels, names and order stay as they are. Lists from older versions, without groups, are organised by language automatically: channels from the default list go to their language, and your own channels go to `[PT]`.
+When new channels are added to the default list ([`server/channels.default.txt`](server/channels.default.txt)), `./install.sh` adds them to your list automatically, so after a `git pull`, just run `./install.sh`. It only adds new channels, at the end of their category (or of their language group, for a new category). Your own channels, names and order stay as they are. Lists from older versions, without groups, are organised by language automatically: channels from the default list go to their language, and your own channels go to `[PT]`. Lists without categories get them the same way: channels from the default list take their default category and are sorted into sections, keeping your order inside each section, and your own channels go to *Outros*, which you can change in **Editar**.
 
 A default channel you deleted is **not** added back. The defaults already offered are remembered in `~/.config/tv-remote/channels.seen`. To get every default channel offered again, delete that file and run `./install.sh`. The same update also runs on its own with `./update-channels.sh`.
 

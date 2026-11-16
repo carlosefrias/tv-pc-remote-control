@@ -1,72 +1,73 @@
 # TV Remote channel list.
 #   [PT] / [EN] / [DE] start a language group (one tab per group on the phone).
-#   Each channel:  Name | URL
+#   Each channel:  Name | URL | Category   (category optional: the phone shows
+#   one section per category, in order of first appearance)
 # Lines starting with # are ignored. Order here = order on the phone.
 # You can edit this file by hand or from the phone app (Edit mode).
 # Note: editing from the phone rewrites this file (comments other than this
 # header are not kept).
 
 [PT]
-RTP 1 | https://www.rtp.pt/play/direto/rtp1
-RTP 2 | https://www.rtp.pt/play/direto/rtp2
-RTP Notícias | https://www.rtp.pt/play/direto/rtp3
-CNN Portugal | https://cnnportugal.iol.pt/direto
-RTP Memória | https://www.rtp.pt/play/direto/rtpmemoria
-RTP Mundo | https://www.rtp.pt/play/direto/rtpinternacional
-RTP África | https://www.rtp.pt/play/direto/rtpafrica
-RTP Desporto 1 | https://www.rtp.pt/play/direto/rtpdesporto1
-ARTV Parlamento | https://canal.parlamento.pt/
-RTP Madeira | https://www.rtp.pt/play/direto/rtpmadeira
-RTP Açores | https://www.rtp.pt/play/direto/rtpacores
-Euronews | https://pt.euronews.com/live
-Band (Brasil) | https://beyond.spalla.io/player/?live=019a797e-eeb8-7eda-9518-132403ccb160
+RTP 1 | https://www.rtp.pt/play/direto/rtp1 | Generalistas
+RTP 2 | https://www.rtp.pt/play/direto/rtp2 | Generalistas
+RTP Memória | https://www.rtp.pt/play/direto/rtpmemoria | Generalistas
+Band (Brasil) | https://beyond.spalla.io/player/?live=019a797e-eeb8-7eda-9518-132403ccb160 | Generalistas
+RTP Notícias | https://www.rtp.pt/play/direto/rtp3 | Notícias
+CNN Portugal | https://cnnportugal.iol.pt/direto | Notícias
+Euronews | https://pt.euronews.com/live | Notícias
+ARTV Parlamento | https://canal.parlamento.pt/ | Notícias
+RTP Desporto 1 | https://www.rtp.pt/play/direto/rtpdesporto1 | Desporto
+RTP Madeira | https://www.rtp.pt/play/direto/rtpmadeira | Regionais e Internacionais
+RTP Açores | https://www.rtp.pt/play/direto/rtpacores | Regionais e Internacionais
+RTP Mundo | https://www.rtp.pt/play/direto/rtpinternacional | Regionais e Internacionais
+RTP África | https://www.rtp.pt/play/direto/rtpafrica | Regionais e Internacionais
 
 [EN]
-Sky News | https://news.sky.com/watch-live
-Al Jazeera English | https://www.aljazeera.com/live
-CNA | https://www.channelnewsasia.com/watch
-NHK World | https://www3.nhk.or.jp/nhkworld/en/live/
-ABC News Live | https://abcnews.go.com/Live
-CBS News 24/7 | https://www.cbsnews.com/live/
-NBC News NOW | https://www.nbcnews.com/now
-GB News | https://www.gbnews.com/watch/live
-TRT World | https://www.trtworld.com/live
-Euronews | https://www.euronews.com/live
-CNN Headlines | https://pluto.tv/gb_ie/watch/live-tv/31433/
-Pluto TV Kids | https://pluto.tv/gb_ie/watch/live-tv/30257/
-Pokémon | https://pluto.tv/gb_ie/watch/live-tv/30463/
-Teletubbies | https://pluto.tv/gb_ie/watch/live-tv/29529/
-Retro Toons | https://pluto.tv/gb_ie/watch/live-tv/29217/
-Pluto TV Movies | https://pluto.tv/gb_ie/watch/live-tv/31182/
-Pluto TV Action | https://pluto.tv/gb_ie/watch/live-tv/29318/
-Pluto TV Thrillers | https://pluto.tv/gb_ie/watch/live-tv/29324/
-Pluto TV Sci-Fi | https://pluto.tv/gb_ie/watch/live-tv/28661/
-Pluto TV Comedy Movies | https://pluto.tv/gb_ie/watch/live-tv/29328/
-Pluto TV Westerns | https://pluto.tv/gb_ie/watch/live-tv/20563/
-Pluto TV Family Movie Club | https://pluto.tv/gb_ie/watch/live-tv/29655/
-British Screen Classics | https://pluto.tv/gb_ie/watch/live-tv/28942/
-Curzon | https://pluto.tv/gb_ie/watch/live-tv/28699/
-Pluto TV Drama | https://pluto.tv/gb_ie/watch/live-tv/18968/
-Pluto TV Crime Drama | https://pluto.tv/gb_ie/watch/live-tv/31372/
-CSI | https://pluto.tv/gb_ie/watch/live-tv/19553/
-Pluto TV Sherlock | https://pluto.tv/gb_ie/watch/live-tv/29385/
-Pluto TV Classic TV | https://pluto.tv/gb_ie/watch/live-tv/29152/
-Pluto TV Sci-fi Series | https://pluto.tv/gb_ie/watch/live-tv/19946/
-Pluto TV Sitcoms | https://pluto.tv/gb_ie/watch/live-tv/30742/
-Pluto TV Crime | https://pluto.tv/gb_ie/watch/live-tv/28675/
-Pluto TV History | https://pluto.tv/gb_ie/watch/live-tv/18224/
-Pluto TV Science | https://pluto.tv/gb_ie/watch/live-tv/28988/
-Pluto TV Space | https://pluto.tv/gb_ie/watch/live-tv/30748/
-Pluto TV Animals | https://pluto.tv/gb_ie/watch/live-tv/29878/
-5 Exploring Britain | https://pluto.tv/gb_ie/watch/live-tv/29900/
-Pluto TV Britain at War | https://pluto.tv/gb_ie/watch/live-tv/28678/
+Sky News | https://news.sky.com/watch-live | News
+Al Jazeera English | https://www.aljazeera.com/live | News
+CNA | https://www.channelnewsasia.com/watch | News
+NHK World | https://www3.nhk.or.jp/nhkworld/en/live/ | News
+ABC News Live | https://abcnews.go.com/Live | News
+CBS News 24/7 | https://www.cbsnews.com/live/ | News
+NBC News NOW | https://www.nbcnews.com/now | News
+GB News | https://www.gbnews.com/watch/live | News
+TRT World | https://www.trtworld.com/live | News
+Euronews | https://www.euronews.com/live | News
+CNN Headlines | https://pluto.tv/gb_ie/watch/live-tv/31433/ | News
+Pluto TV Movies | https://pluto.tv/gb_ie/watch/live-tv/31182/ | Movies
+Pluto TV Action | https://pluto.tv/gb_ie/watch/live-tv/29318/ | Movies
+Pluto TV Thrillers | https://pluto.tv/gb_ie/watch/live-tv/29324/ | Movies
+Pluto TV Sci-Fi | https://pluto.tv/gb_ie/watch/live-tv/28661/ | Movies
+Pluto TV Comedy Movies | https://pluto.tv/gb_ie/watch/live-tv/29328/ | Movies
+Pluto TV Westerns | https://pluto.tv/gb_ie/watch/live-tv/20563/ | Movies
+Pluto TV Family Movie Club | https://pluto.tv/gb_ie/watch/live-tv/29655/ | Movies
+British Screen Classics | https://pluto.tv/gb_ie/watch/live-tv/28942/ | Movies
+Curzon | https://pluto.tv/gb_ie/watch/live-tv/28699/ | Movies
+Pluto TV Drama | https://pluto.tv/gb_ie/watch/live-tv/18968/ | Series
+Pluto TV Crime Drama | https://pluto.tv/gb_ie/watch/live-tv/31372/ | Series
+CSI | https://pluto.tv/gb_ie/watch/live-tv/19553/ | Series
+Pluto TV Sherlock | https://pluto.tv/gb_ie/watch/live-tv/29385/ | Series
+Pluto TV Classic TV | https://pluto.tv/gb_ie/watch/live-tv/29152/ | Series
+Pluto TV Sci-fi Series | https://pluto.tv/gb_ie/watch/live-tv/19946/ | Series
+Pluto TV Sitcoms | https://pluto.tv/gb_ie/watch/live-tv/30742/ | Series
+Pluto TV Crime | https://pluto.tv/gb_ie/watch/live-tv/28675/ | Series
+Pluto TV History | https://pluto.tv/gb_ie/watch/live-tv/18224/ | Documentaries
+Pluto TV Science | https://pluto.tv/gb_ie/watch/live-tv/28988/ | Documentaries
+Pluto TV Space | https://pluto.tv/gb_ie/watch/live-tv/30748/ | Documentaries
+Pluto TV Animals | https://pluto.tv/gb_ie/watch/live-tv/29878/ | Documentaries
+5 Exploring Britain | https://pluto.tv/gb_ie/watch/live-tv/29900/ | Documentaries
+Pluto TV Britain at War | https://pluto.tv/gb_ie/watch/live-tv/28678/ | Documentaries
+Pluto TV Kids | https://pluto.tv/gb_ie/watch/live-tv/30257/ | Kids
+Pokémon | https://pluto.tv/gb_ie/watch/live-tv/30463/ | Kids
+Teletubbies | https://pluto.tv/gb_ie/watch/live-tv/29529/ | Kids
+Retro Toons | https://pluto.tv/gb_ie/watch/live-tv/29217/ | Kids
 
 [DE]
-Das Erste | https://www.ardmediathek.de/live/Y3JpZDovL2Rhc2Vyc3RlLmRlL2xpdmUvY2xpcC9hYmNhMDdhMy0zNDc2LTQ4NTEtYjE2Mi1mZGU4ZjY0NmQ0YzQ
-tagesschau24 | https://www.ardmediathek.de/live/Y3JpZDovL2Rhc2Vyc3RlLmRlL3RhZ2Vzc2NoYXUvbGl2ZXN0cmVhbQ
-BR Fernsehen | https://www.ardmediathek.de/live/Y3JpZDovL2JyLmRlL0xpdmVzdHJlYW0tQlItU8O8ZA
-NDR Fernsehen | https://www.ardmediathek.de/live/Y3JpZDovL25kci5kZS9MaXZlc3RyZWFtLU5EUi1OaWVkZXJzYWNoc2Vu
-hr-fernsehen | https://www.ardmediathek.de/live/Y3JpZDovL2hyLmRlL0xpdmVzdHJlYW0tSFI
-Euronews | https://de.euronews.com/live
-WDR Fernsehen | https://www.ardmediathek.de/live/Y3JpZDovL3dkci5kZS9CZWl0cmFnLTNkYTY2NGRlLTE4YzItNDY1MC1hNGZmLTRmNjQxNDcyMDcyYg
-ARD alpha | https://www.ardmediathek.de/live/Y3JpZDovL2JyLmRlL0xpdmVzdHJlYW0tQVJELUFscGhh
+Das Erste | https://www.ardmediathek.de/live/Y3JpZDovL2Rhc2Vyc3RlLmRlL2xpdmUvY2xpcC9hYmNhMDdhMy0zNDc2LTQ4NTEtYjE2Mi1mZGU4ZjY0NmQ0YzQ | Vollprogramme
+tagesschau24 | https://www.ardmediathek.de/live/Y3JpZDovL2Rhc2Vyc3RlLmRlL3RhZ2Vzc2NoYXUvbGl2ZXN0cmVhbQ | Nachrichten
+Euronews | https://de.euronews.com/live | Nachrichten
+BR Fernsehen | https://www.ardmediathek.de/live/Y3JpZDovL2JyLmRlL0xpdmVzdHJlYW0tQlItU8O8ZA | Regional
+NDR Fernsehen | https://www.ardmediathek.de/live/Y3JpZDovL25kci5kZS9MaXZlc3RyZWFtLU5EUi1OaWVkZXJzYWNoc2Vu | Regional
+hr-fernsehen | https://www.ardmediathek.de/live/Y3JpZDovL2hyLmRlL0xpdmVzdHJlYW0tSFI | Regional
+WDR Fernsehen | https://www.ardmediathek.de/live/Y3JpZDovL3dkci5kZS9CZWl0cmFnLTNkYTY2NGRlLTE4YzItNDY1MC1hNGZmLTRmNjQxNDcyMDcyYg | Regional
+ARD alpha | https://www.ardmediathek.de/live/Y3JpZDovL2JyLmRlL0xpdmVzdHJlYW0tQVJELUFscGhh | Doku & Bildung

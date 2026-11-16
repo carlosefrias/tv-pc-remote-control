@@ -80,6 +80,18 @@ button.wide { width: 100%; margin-top: 8px; }
 }
 @media (min-width: 560px) { .grid { grid-template-columns: repeat(3, 1fr); } }
 
+/* Category heading inside a language tab: spans the whole grid row */
+.section {
+  grid-column: 1 / -1;
+  margin: 10px 2px -4px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #9aa4b1;
+}
+.section:first-child { margin-top: 0; }
+
 .tile {
   position: relative;
   min-height: 96px;
@@ -134,7 +146,7 @@ footer button { flex: 1; font-size: 22px; padding: 12px 0; }
   padding: 8px 10px;
   margin-bottom: 6px;
 }
-.row input.url { font-size: 13px; color: #b7c0cc; }
+.row input.url, .row input.category { font-size: 13px; color: #b7c0cc; }
 .row .row-actions { display: flex; gap: 6px; justify-content: flex-end; }
 .row .row-actions button { padding: 6px 12px; }
 .editor-actions { display: flex; gap: 10px; margin-top: 14px; }

@@ -122,7 +122,7 @@ def load_config():
 # --------------------------------------------------------------------------- channels
 
 def read_channels():
-    """[{id, name, url, group}] - id is the position in the file."""
+    """[{id, name, url, group, category}] - id is the position in the file."""
     if not CHANNELS_FILE.exists():
         channels.write(str(CHANNELS_FILE), channels.parse(str(DEFAULT_CHANNELS_FILE))[0])
     items, _ = channels.parse(str(CHANNELS_FILE))
@@ -135,12 +135,13 @@ def write_channels(items):
     clean = []
     for it in items:
         name = str(it.get("name", "")).replace("|", "/").replace("\n", " ").strip().lstrip("#[").strip()
-        url = str(it.get("url", "")).replace("\n", "").strip()
+        url = str(it.get("url", "")).replace("\n", "").replace("|", "%7C").strip()
         if not name or not url:
             raise ValueError("Every channel needs a name and a URL")
         if not url.startswith(("http://", "https://")):
             raise ValueError("URL must start with http:// or https://: %s" % url)
-        clean.append({"name": name, "url": url, "group": channels.clean_group(it.get("group"))})
+        clean.append({"name": name, "url": url, "group": channels.clean_group(it.get("group")),
+                      "category": channels.clean_category(it.get("category"))})
     channels.write(str(CHANNELS_FILE), clean)
 
 

@@ -1,13 +1,16 @@
 """The channel list file, grouped by language.
 
     [PT]
-    RTP 1 | https://www.rtp.pt/play/direto/rtp1
+    RTP 1 | https://www.rtp.pt/play/direto/rtp1 | Generalistas
     [EN]
-    Sky News | https://news.sky.com/watch-live
+    Sky News | https://news.sky.com/watch-live | News
 
 A "[XX]" line starts a group (the phone shows one tab per group). Channels
 before any header belong to PT - that is how lists from older versions look;
 `update` converts them, taking each channel's group from the defaults.
+The optional third field is the channel's category: the phone shows each
+tab's channels in sections, one per category. Lists from versions without
+categories get them from the defaults (`update`).
 Standard library only. CLI:  python3 channels.py update DEFAULTS MINE SEEN
 """
 
@@ -22,7 +25,8 @@ HEADER_RE = re.compile(r"^\[([A-Za-z0-9_-]{1,12})\]$")
 FILE_HEADER = """\
 # TV Remote channel list.
 #   [PT] / [EN] / [DE] start a language group (one tab per group on the phone).
-#   Each channel:  Name | URL
+#   Each channel:  Name | URL | Category   (category optional: the phone shows
+#   one section per category, in order of first appearance)
 # Lines starting with # are ignored. Order here = order on the phone.
 # You can edit this file by hand or from the phone app (Edit mode).
 # Note: editing from the phone rewrites this file (comments other than this
@@ -39,8 +43,12 @@ def clean_group(group):
     return g or DEFAULT_GROUP
 
 
+def clean_category(category):
+    return re.sub(r"\s+", " ", str(category or "").replace("|", "/")).strip()[:30]
+
+
 def parse(path):
-    """-> (channels [{name, url, group}], has_group_headers)"""
+    """-> (channels [{name, url, group, category}], has_group_headers)"""
     items, group, has_headers = [], DEFAULT_GROUP, False
     with open(path, encoding="utf-8") as f:
         for raw in f:
@@ -52,9 +60,11 @@ def parse(path):
                 group, has_headers = m.group(1).upper(), True
                 continue
             if "|" in line:
-                name, url = (p.strip() for p in line.split("|", 1))
+                parts = [p.strip() for p in line.split("|", 2)]
+                name, url = parts[0], parts[1]
                 if name and url:
-                    items.append({"name": name, "url": url, "group": group})
+                    items.append({"name": name, "url": url, "group": group,
+                                  "category": clean_category(parts[2] if len(parts) > 2 else "")})
     return items, has_headers
 
 
@@ -71,7 +81,8 @@ def serialize(items):
     out = [FILE_HEADER]
     for g in group_order([it["group"] for it in items]):
         out.append("\n[%s]\n" % g)
-        out.extend("%s | %s\n" % (it["name"], it["url"]) for it in items if it["group"] == g)
+        out.extend("%s | %s%s\n" % (it["name"], it["url"], " | " + it["category"] if it.get("category") else "")
+                   for it in items if it["group"] == g)
     return "".join(out)
 
 
@@ -106,21 +117,40 @@ def update(defaults_path, mine_path, seen_path):
             seen = {norm_url(l) for l in f if l.strip() and not l.startswith("#")}
 
     notes = []
+    by_url = {norm_url(c["url"]): c for c in defaults}
     if not has_groups:  # list from an older version: put each channel in its language group
-        by_url = {norm_url(c["url"]): c["group"] for c in defaults}
         for c in mine:
-            c["group"] = by_url.get(norm_url(c["url"]), DEFAULT_GROUP)
+            d = by_url.get(norm_url(c["url"]))
+            c["group"] = d["group"] if d else DEFAULT_GROUP
         notes.append("organised by language")
+
+    # List from a version without categories: take each channel's category from
+    # the defaults and sort each language into sections, in the order the
+    # defaults use (the user's own channels stay together, at the end).
+    categorise = not any(c["category"] for c in mine) and any(c["category"] for c in defaults)
+    if categorise:
+        for c in mine:
+            d = by_url.get(norm_url(c["url"]))
+            c["category"] = d["category"] if d and d["group"] == c["group"] else ""
+        order = []
+        for d in defaults:
+            if (d["group"], d["category"]) not in order:
+                order.append((d["group"], d["category"]))
+        mine.sort(key=lambda c: order.index((c["group"], c["category"]))
+                  if (c["group"], c["category"]) in order else len(order))  # stable sort
+        notes.append("sorted into categories")
 
     have = {norm_url(c["url"]) for c in mine}
     new = [dict(c) for c in defaults if norm_url(c["url"]) not in have and norm_url(c["url"]) not in seen]
-    for c in new:  # insert at the end of its group
-        last = max([i for i, m in enumerate(mine) if m["group"] == c["group"]], default=len(mine) - 1)
+    for c in new:  # insert at the end of its category, or else of its language group
+        same = [i for i, m in enumerate(mine) if m["group"] == c["group"]]
+        same_cat = [i for i in same if mine[i]["category"].lower() == c["category"].lower()]
+        last = max(same_cat or same, default=len(mine) - 1)
         mine.insert(last + 1, c)
     if new:
         notes.append("added %d new channel(s): %s" % (len(new), ", ".join("%s (%s)" % (c["name"], c["group"]) for c in new)))
 
-    if new or not has_groups:
+    if new or not has_groups or categorise:
         write(mine_path, mine)
     remember(seen | default_urls)
     return "Channels: " + ("; ".join(notes) if notes else "no new channels.")

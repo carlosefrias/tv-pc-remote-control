@@ -237,6 +237,21 @@
 
   function inGroup(g) { return channels.filter(function (ch) { return groupOf(ch) === g; }); }
 
+  // Categories = sections inside a language tab, in order of first appearance;
+  // channels without a category go last, under "Outros".
+  function sections(list) {
+    var out = [], index = {}, rest = [];
+    list.forEach(function (ch) {
+      var c = (ch.category || '').trim();
+      if (!c) { rest.push(ch); return; }
+      var key = c.toLowerCase();
+      if (!(key in index)) { index[key] = out.length; out.push({ name: c, items: [] }); }
+      out[index[key]].items.push(ch);
+    });
+    if (rest.length) out.push({ name: out.length ? 'Outros' : '', items: rest });
+    return out;
+  }
+
   function renderTabs() {
     var tabs = $('tabs');
     tabs.innerHTML = '';
@@ -260,13 +275,22 @@
         '. Toque em Editar para adicionar.' : 'Leia o QR code mostrado no portátil (./show-qr.sh) para ligar este telemóvel.') + '</div>';
       return;
     }
-    list.forEach(function (ch, i) {
-      var b = document.createElement('button');
-      b.className = 'tile' + (ch.id === current ? ' current' : '');
-      b.style.background = colorFor(i);
-      b.textContent = ch.name;
-      b.onclick = function () { play(ch, b); };
-      grid.appendChild(b);
+    var i = 0;
+    sections(list).forEach(function (sec) {
+      if (sec.name) {
+        var h = document.createElement('h2');
+        h.className = 'section';
+        h.textContent = sec.name;
+        grid.appendChild(h);
+      }
+      sec.items.forEach(function (ch) {
+        var b = document.createElement('button');
+        b.className = 'tile' + (ch.id === current ? ' current' : '');
+        b.style.background = colorFor(i++);
+        b.textContent = ch.name;
+        b.onclick = function () { play(ch, b); };
+        grid.appendChild(b);
+      });
     });
   }
 
@@ -345,17 +369,19 @@
   };
 
   // ------------------------------------------------------------------ editor
-  function addRow(name, url) {
+  function addRow(name, url, category) {
     var row = document.createElement('div');
     row.className = 'row';
     row.innerHTML =
       '<input class="name" placeholder="Nome (ex: RTP 1)">' +
       '<input class="url" type="url" placeholder="https://…" autocapitalize="off" autocorrect="off">' +
+      '<input class="category" list="categoryList" placeholder="Categoria (ex: Notícias)">' +
       '<div class="row-actions">' +
       '<button data-a="up">↑</button><button data-a="down">↓</button>' +
       '<button data-a="del" class="danger">Apagar</button></div>';
     row.querySelector('.name').value = name || '';
     row.querySelector('.url').value = url || '';
+    row.querySelector('.category').value = category || '';
     row.querySelector('.row-actions').onclick = function (ev) {
       var a = ev.target.getAttribute('data-a');
       if (a === 'del') rows.removeChild(row);
@@ -377,23 +403,40 @@
     if (on) {  // edit the channels of the open language tab only
       $('editGroup').textContent = GROUP_NAMES[activeGroup] || activeGroup;
       rows.innerHTML = '';
-      inGroup(activeGroup).forEach(function (ch) { addRow(ch.name, ch.url); });
+      var secs = sections(inGroup(activeGroup)), opts = $('categoryList');
+      opts.innerHTML = '';
+      secs.forEach(function (sec) {
+        if (sec.name && sec.name !== 'Outros') {
+          var o = document.createElement('option');
+          o.value = sec.name;
+          opts.appendChild(o);
+        }
+        // Rows in the order shown on the grid (grouped by category).
+        sec.items.forEach(function (ch) { addRow(ch.name, ch.url, ch.category); });
+      });
     }
   }
 
   $('editBtn').onclick = function () { if (transport) setEditing(true); };
   $('cancelBtn').onclick = function () { setEditing(false); };
-  $('addBtn').onclick = function () { addRow('', 'https://').querySelector('.name').focus(); };
+  $('addBtn').onclick = function () {
+    var last = rows.lastElementChild;
+    addRow('', 'https://', last ? last.querySelector('.category').value : '').querySelector('.name').focus();
+  };
   $('saveBtn').onclick = function () {
     // The other languages are sent back unchanged; this tab's rows replace its channels.
     var list = channels.filter(function (ch) { return groupOf(ch) !== activeGroup; }).map(function (ch) {
-      return { name: ch.name, url: ch.url, group: groupOf(ch) };
+      return { name: ch.name, url: ch.url, group: groupOf(ch), category: ch.category || '' };
     });
+    var mine = [];
     Array.prototype.forEach.call(rows.children, function (row) {
       var name = row.querySelector('.name').value.trim();
       var url = row.querySelector('.url').value.trim();
-      if (name || (url && url !== 'https://')) list.push({ name: name, url: url, group: activeGroup });
+      var category = row.querySelector('.category').value.trim();
+      if (name || (url && url !== 'https://')) mine.push({ name: name, url: url, group: activeGroup, category: category });
     });
+    // Saved grouped by category, so the file reads like the grid.
+    sections(mine).forEach(function (sec) { list = list.concat(sec.items); });
     transport.request('save', { channels: list }).then(function (res) {
       remember(res); ok();
       setEditing(false);
