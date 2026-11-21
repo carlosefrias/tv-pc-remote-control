@@ -37,6 +37,24 @@ function fill(el) {
   document.documentElement.style.setProperty('overflow', 'hidden', 'important');
 }
 
+// "Register / sign in" popups (e.g. RTP Play's "Registe-se na RTP", shown about
+// once a week) can sit over the player: answer them with their "later" option.
+// Only links/buttons inside a dialog, and never one that registers or logs in.
+var LATER = /registar-me\s+mais\s+tarde|^(talvez\s+)?mais\s+tarde$|^agora\s+n[aã]o$|^(maybe\s+)?later$|^not\s+now$|^(vielleicht\s+)?sp[aä]ter$|^jetzt\s+nicht$|^no,?\s+thanks$|^nein,?\s+danke$/i;
+function dismissNag() {
+  var els = document.querySelectorAll(
+    '[role=dialog] a, [role=dialog] button, .modal a, .modal button, [class*="popup" i] a, [class*="popup" i] button');
+  for (var i = 0; i < els.length; i++) {
+    var el = els[i], text = (el.innerText || el.textContent || '').replace(/\s+/g, ' ').trim();
+    var r = el.getBoundingClientRect();
+    if (text && text.length < 60 && LATER.test(text) && r.width > 0 && r.height > 0) {
+      el.click();
+      return text;
+    }
+  }
+  return null;
+}
+
 var videos = Array.prototype.slice.call(document.querySelectorAll('video'));
 var main = null, bestArea = 0;
 videos.forEach(function (v) {
@@ -46,6 +64,8 @@ videos.forEach(function (v) {
 
 var fsEl = document.fullscreenElement;
 var res = { url: location.href, video: !!main, fullscreen: !!fsEl, playing: false, muted: false };
+var nag = dismissNag();
+if (nag) { res.dismissed = nag; res.action = 'dismiss-popup'; }
 
 if (!main) {
   // No <video> in this document: the player may live inside an iframe (e.g. a

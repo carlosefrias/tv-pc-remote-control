@@ -33,6 +33,16 @@ function roots(root, out) {  // document + every open shadow root inside it
   return out;
 }
 
+// Didomi (RTP...) often shows only "Accept" and "Learn more" on its first
+// screen. Its own API can refuse everything directly: {label} with no `el`
+// tells the server the notice is already answered.
+var D = window.Didomi;
+if (D && typeof D.setUserDisagreeToAll === 'function' && D.notice && typeof D.notice.isVisible === 'function' &&
+    D.notice.isVisible()) {
+  D.setUserDisagreeToAll();
+  return { label: 'Didomi: disagree to all (API)' };
+}
+
 var best = null;
 roots(document, []).forEach(function (root) {
   Array.prototype.forEach.call(root.querySelectorAll(

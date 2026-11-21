@@ -193,6 +193,8 @@ def reject_cookies(m):
         if found and found.get("el"):
             click_element(m, found["el"])
             return found.get("label")
+        if found and found.get("label"):  # refused through the consent tool's API
+            return found["label"]
         for frame in m.execute(CONSENT_FRAMES_JS) or []:
             try:
                 switch_to_frame(m, frame)
@@ -262,6 +264,8 @@ def assist(port, keep_going, url, tv=None, fast_secs=60, on_status=None, refuse_
                 res = m.execute(ASSIST_JS, [{"elapsed": elapsed, "clicks": clicks[0]}]) or {}
             except MarionetteError as e:  # page navigating/reloading: try again
                 res = {"error": str(e)[:120]}
+            if res.get("dismissed"):
+                log("popup: clicked %r" % res["dismissed"])
             if res.get("frame") and not res.get("video"):
                 # The player is inside an iframe: run the assist in there too.
                 inner = run_in_frame(m, res["frame"], elapsed, clicks)
