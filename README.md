@@ -5,6 +5,10 @@ Control the TV laptop (Linux Mint + Firefox over HDMI) from your phone.
 - **Laptop** (`server/tvremote.py`): small Python server that uses only the standard library. When you pick a channel it closes all Firefox windows, reopens Firefox in **kiosk** mode on that channel's page, and puts the **video player itself in full screen**, so the TV shows only the video. It also controls the volume, stops playback and shuts the laptop down.
 - **Phone** (`web/`): web app. It shows a grid of channels plus volume, stop and power buttons, and has an edit mode for the channel list. It works on Android and iOS. Add it to the home screen to use it like an app. It reaches the laptop **through the internet**, so it works even when the Wi-Fi isolates devices from each other, as the home 4G router does. See [How the phone reaches the laptop](#how-the-phone-reaches-the-laptop).
 
+<p align="center">
+  <img src="docs/demo.gif" alt="The phone app: picking a channel, changing the volume, swiping between the Português, English and Deutsch tabs, and opening edit mode" width="300">
+</p>
+
 ## Install (on the laptop)
 
 ```bash
